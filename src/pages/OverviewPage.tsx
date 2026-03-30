@@ -33,11 +33,15 @@ export default function OverviewPage() {
       </div>
 
       {/* Status Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Umidade do Solo" value={current.soilMoisture} unit="%" icon={Droplets} status={getStatusColor(current.soilMoisture, 'moisture')} />
         <StatCard title="Temperatura" value={current.temperature} unit="°C" icon={Thermometer} status={getStatusColor(current.temperature, 'temperature')} />
         <StatCard title="Nível de Água" value={current.waterLevel} unit="%" icon={Waves} status={getStatusColor(current.waterLevel, 'water')} />
         <StatCard title="Qualidade do Ar" value={current.airQuality} unit="AQI" icon={Wind} status={getStatusColor(current.airQuality, 'air')} />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="Sensor de Chamas" value={current.flameDetected > 0 ? 'DETECTADO' : 'Normal'} icon={Flame} status={current.flameDetected > 0 ? 'danger' : 'good'} />
+        <StatCard title="Luminosidade (LDR)" value={current.ldrValue} unit="lux" icon={Sun} status={current.ldrValue < 300 ? 'warning' : 'good'} />
         <StatCard title="Irrigação" value={irrigationOn ? 'Ativo' : 'Inativo'} icon={Power} status={irrigationOn ? 'good' : 'warning'} />
         <StatCard title="Alertas Ativos" value={activeAlerts.length} icon={AlertTriangle} status={activeAlerts.length > 2 ? 'danger' : activeAlerts.length > 0 ? 'warning' : 'good'} />
       </div>
