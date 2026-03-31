@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Cpu, Droplets, Waves, Thermometer, Flame, Wind, Sun } from "lucide-react";
+import { Cpu, Droplets, Waves, Thermometer, Flame, Wind, Sun, CircleDot, Lightbulb, CloudSun } from "lucide-react";
 import { useSensorData } from "@/hooks/useSensorData";
 import { generateDevices } from "@/lib/mockData";
 
@@ -34,9 +34,11 @@ export default function DevicesPage() {
           </div>
           <div className="flex-1">
             <p className="font-semibold text-sm">ESP32 - Processador Principal</p>
-            <p className="text-xs text-muted-foreground">Nó central de aquisição de dados • Comunicação MQTT/HTTPS</p>
+            <p className="text-xs text-muted-foreground">Nó central de aquisição de dados — Comunicação MQTT/HTTPS</p>
           </div>
-          <Badge variant="default" className="text-xs">🟢 Online</Badge>
+          <Badge variant="default" className="text-xs flex items-center gap-1">
+            <CircleDot className="w-3 h-3" /> Online
+          </Badge>
         </CardContent>
       </Card>
 
@@ -69,8 +71,9 @@ export default function DevicesPage() {
                     <TableCell className="font-medium text-sm">{device.name}</TableCell>
                     <TableCell className="text-sm">{device.type}</TableCell>
                     <TableCell>
-                      <Badge variant={device.status === 'online' ? 'default' : 'secondary'} className="text-xs">
-                        {device.status === 'online' ? '🟢 Online' : '🔴 Offline'}
+                      <Badge variant={device.status === 'online' ? 'default' : 'secondary'} className="text-xs flex items-center gap-1 w-fit">
+                        <CircleDot className="w-3 h-3" />
+                        {device.status === 'online' ? 'Online' : 'Offline'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm font-medium">
@@ -100,9 +103,15 @@ export default function DevicesPage() {
               <p className="text-sm font-medium">Controle de Iluminação (LDR)</p>
               <p className="text-xs text-muted-foreground">
                 Luminosidade atual: <strong>{current.ldrValue} lux</strong> — 
-                {current.ldrValue < 300 ? ' 💡 Luzes acionadas automaticamente (ambiente escuro)' : 
-                 current.ldrValue < 600 ? ' 🌤 Iluminação parcial' : 
-                 ' ☀️ Luz natural suficiente — luzes desligadas'}
+                {current.ldrValue < 300 && (
+                  <span className="inline-flex items-center gap-1 ml-1"><Lightbulb className="w-3 h-3 inline" /> Luzes acionadas automaticamente (ambiente escuro)</span>
+                )}
+                {current.ldrValue >= 300 && current.ldrValue < 600 && (
+                  <span className="inline-flex items-center gap-1 ml-1"><CloudSun className="w-3 h-3 inline" /> Iluminação parcial</span>
+                )}
+                {current.ldrValue >= 600 && (
+                  <span className="inline-flex items-center gap-1 ml-1"><Sun className="w-3 h-3 inline" /> Luz natural suficiente — luzes desligadas</span>
+                )}
               </p>
             </div>
           </div>

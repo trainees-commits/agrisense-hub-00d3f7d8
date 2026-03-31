@@ -10,6 +10,8 @@ export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -23,6 +25,16 @@ export default function LoginPage() {
       toast.error('A palavra-passe deve ter pelo menos 6 caracteres');
       return;
     }
+    if (isSignUp) {
+      if (!fullName.trim()) {
+        toast.error('Informe o seu nome');
+        return;
+      }
+      if (password !== confirmPassword) {
+        toast.error('As palavras-passe não coincidem');
+        return;
+      }
+    }
 
     setLoading(true);
     try {
@@ -30,10 +42,12 @@ export default function LoginPage() {
         const { error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: {
+            data: { full_name: fullName.trim() },
+          },
         });
         if (error) throw error;
-        toast.success('Conta criada! Verifique o seu email para confirmar.');
+        toast.success('Conta criada com sucesso!');
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
@@ -69,6 +83,19 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {isSignUp && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Nome Completo</label>
+                  <Input
+                    type="text"
+                    placeholder="Seu nome completo"
+                    value={fullName}
+                    onChange={e => setFullName(e.target.value)}
+                    required
+                    autoComplete="name"
+                  />
+                </div>
+              )}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">Email</label>
                 <Input
@@ -100,6 +127,21 @@ export default function LoginPage() {
                   </button>
                 </div>
               </div>
+              {isSignUp && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Confirmar Palavra-passe</label>
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={e => setConfirmPassword(e.target.value)}
+                      required
+                      autoComplete="new-password"
+                    />
+                  </div>
+                </div>
+              )}
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                 {isSignUp ? 'Criar Conta' : 'Entrar'}
@@ -108,7 +150,7 @@ export default function LoginPage() {
             <div className="mt-4 text-center">
               <button
                 type="button"
-                onClick={() => setIsSignUp(!isSignUp)}
+                onClick={() => { setIsSignUp(!isSignUp); setConfirmPassword(''); setFullName(''); }}
                 className="text-sm text-primary hover:underline"
               >
                 {isSignUp ? 'Já tem conta? Faça login' : 'Não tem conta? Criar agora'}
@@ -118,7 +160,7 @@ export default function LoginPage() {
         </Card>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          Comunicação via MQTT sobre HTTPS/TLS • Arquitetura IoT Desacoplada
+          Comunicação via MQTT sobre HTTPS/TLS — Arquitetura IoT Desacoplada
         </p>
       </div>
     </div>

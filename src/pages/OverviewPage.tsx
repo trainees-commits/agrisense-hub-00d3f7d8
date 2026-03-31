@@ -1,4 +1,4 @@
-import { Droplets, Thermometer, Waves, Wind, Power, AlertTriangle, Flame, Sun } from "lucide-react";
+import { Droplets, Thermometer, Waves, Wind, Power, AlertTriangle, Flame, Sun, CloudOff } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { GaugeChart } from "@/components/GaugeChart";
 import { useSensorData } from "@/hooks/useSensorData";
@@ -56,24 +56,29 @@ export default function OverviewPage() {
         <StatCard title="Alertas Ativos" value={activeAlerts.length} icon={AlertTriangle} status={activeAlerts.length > 2 ? 'danger' : activeAlerts.length > 0 ? 'warning' : 'good'} />
       </div>
 
-      {/* Gauge Charts */}
+      {/* All Sensor Gauges */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Leituras Instantâneas</CardTitle>
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Activity className="w-4 h-4" />
+            Leituras Instantâneas — Todos os Sensores
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-6">
             <GaugeChart value={current.soilMoisture} max={100} label="Umidade do Solo" unit="%" thresholds={{ good: 60, warning: 80 }} />
             <GaugeChart value={current.temperature} max={50} label="Temperatura" unit="°C" thresholds={{ good: 60, warning: 76 }} />
-            <GaugeChart value={current.waterLevel} max={100} label="Nível Reservatório" unit="%" thresholds={{ good: 50, warning: 75 }} />
+            <GaugeChart value={current.waterLevel} max={100} label="Nível de Água" unit="%" thresholds={{ good: 50, warning: 75 }} />
             <GaugeChart value={current.airQuality} max={200} label="Qualidade do Ar" unit="AQI" thresholds={{ good: 25, warning: 50 }} />
+            <GaugeChart value={current.flameDetected} max={1000} label="Sensor de Chamas" unit="IR" thresholds={{ good: 10, warning: 30 }} />
+            <GaugeChart value={current.smokeLevel} max={500} label="Sensor de Fumaça" unit="ppm" thresholds={{ good: 20, warning: 40 }} />
+            <GaugeChart value={current.ldrValue} max={1023} label="Luminosidade (LDR)" unit="lux" thresholds={{ good: 50, warning: 75 }} />
           </div>
         </CardContent>
       </Card>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Line Chart - Umidade & Temperatura */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Umidade & Temperatura (6h)</CardTitle>
@@ -95,7 +100,6 @@ export default function OverviewPage() {
           </CardContent>
         </Card>
 
-        {/* Bar Chart - Nível de Água */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Nível de Água (12h)</CardTitle>

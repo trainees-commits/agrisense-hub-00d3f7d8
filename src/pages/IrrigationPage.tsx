@@ -3,7 +3,7 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Droplets, Power } from "lucide-react";
+import { Droplets, Power, Settings2, Hand } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -66,7 +66,9 @@ export default function IrrigationPage() {
               <Switch checked={autoMode} onCheckedChange={handleModeToggle} />
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-sm font-medium">{autoMode ? '🤖 Automático' : '🖐️ Manual'}</p>
+              <p className="text-sm font-medium flex items-center gap-2">
+                {autoMode ? <><Settings2 className="w-4 h-4" /> Automático</> : <><Hand className="w-4 h-4" /> Manual</>}
+              </p>
               <p className="text-xs text-muted-foreground mt-1">
                 {autoMode ? 'O sistema irriga automaticamente com base nos sensores' : 'Controle manual pelo operador'}
               </p>
