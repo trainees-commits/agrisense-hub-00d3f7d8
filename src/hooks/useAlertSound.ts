@@ -49,22 +49,22 @@ export function useAlertSound(sensorData: SensorData) {
     const conditions: Record<string, AlertCondition> = {
       flame: {
         triggered: data.flameDetected > 0,
-        message: `🔥 ALERTA CRÍTICO: Chamas detectadas! Intensidade: ${data.flameDetected}`,
+        message: `ALERTA CRITICO: Chamas detectadas! Intensidade: ${data.flameDetected}`,
         type: 'critical',
       },
       temperature: {
         triggered: data.temperature >= 40,
-        message: `🌡️ ALERTA: Temperatura crítica! ${data.temperature}°C`,
+        message: `ALERTA: Temperatura critica! ${data.temperature}°C`,
         type: 'critical',
       },
       waterLow: {
         triggered: data.waterLevel <= 15,
-        message: `💧 ALERTA: Nível de água crítico! ${data.waterLevel}%`,
+        message: `ALERTA: Nivel de agua critico! ${data.waterLevel}%`,
         type: 'critical',
       },
       smoke: {
         triggered: data.smokeLevel > 200,
-        message: `💨 ALERTA: Fumaça em nível perigoso! ${data.smokeLevel} ppm`,
+        message: `ALERTA: Fumaca em nivel perigoso! ${data.smokeLevel} ppm`,
         type: 'critical',
       },
     };
