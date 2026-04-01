@@ -14,7 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      sensor_readings: {
+        Row: {
+          air_quality: number | null
+          created_at: string
+          device_id: string
+          flame_detected: number | null
+          humidity: number | null
+          id: string
+          ldr_value: number | null
+          smoke_level: number | null
+          soil_moisture: number | null
+          temperature: number | null
+          water_level: number | null
+        }
+        Insert: {
+          air_quality?: number | null
+          created_at?: string
+          device_id?: string
+          flame_detected?: number | null
+          humidity?: number | null
+          id?: string
+          ldr_value?: number | null
+          smoke_level?: number | null
+          soil_moisture?: number | null
+          temperature?: number | null
+          water_level?: number | null
+        }
+        Update: {
+          air_quality?: number | null
+          created_at?: string
+          device_id?: string
+          flame_detected?: number | null
+          humidity?: number | null
+          id?: string
+          ldr_value?: number | null
+          smoke_level?: number | null
+          soil_moisture?: number | null
+          temperature?: number | null
+          water_level?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
