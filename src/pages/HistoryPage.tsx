@@ -1,13 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
-import { generateHistoricalData } from "@/lib/mockData";
+import { Download, Loader2 } from "lucide-react";
+import { useSensorData } from "@/hooks/useSensorData";
 import { useState } from "react";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-
-const allData = generateHistoricalData(168);
 
 const tooltipStyle = {
   background: 'hsl(var(--card))',
@@ -18,9 +16,10 @@ const tooltipStyle = {
 };
 
 export default function HistoryPage() {
+  const { history, getFilteredHistory, loading } = useSensorData();
   const [period, setPeriod] = useState(24);
-  const cutoff = Date.now() - period * 3600000;
-  const filtered = allData.filter(d => d.timestamp.getTime() > cutoff);
+
+  const filtered = getFilteredHistory(period);
   const displayed = filtered.filter((_, i) => i % Math.max(1, Math.floor(filtered.length / 50)) === 0);
 
   const chartData = filtered
@@ -34,9 +33,9 @@ export default function HistoryPage() {
     }));
 
   const exportCSV = () => {
-    const header = 'Data/Hora,Umidade Solo (%),Temperatura (°C),Nível Água (%),Qualidade Ar (AQI)\n';
+    const header = 'Data/Hora,Umidade Solo (%),Temperatura (°C),Nível Água (%),Qualidade Ar (AQI),Chama (IR),Fumaça (ppm),LDR (lux)\n';
     const rows = filtered.map(d =>
-      `${d.timestamp.toLocaleString('pt-BR')},${d.soilMoisture},${d.temperature},${d.waterLevel},${d.airQuality}`
+      `${d.timestamp.toLocaleString('pt-BR')},${d.soilMoisture},${d.temperature},${d.waterLevel},${d.airQuality},${d.flameDetected},${d.smokeLevel},${d.ldrValue}`
     ).join('\n');
     const blob = new Blob([header + rows], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -48,6 +47,15 @@ export default function HistoryPage() {
     toast.success('Arquivo CSV exportado!');
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">A carregar histórico...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -57,70 +65,86 @@ export default function HistoryPage() {
         </div>
         <div className="flex gap-2">
           <div className="flex gap-1">
-            {[{ l: '24h', h: 24 }, { l: '3d', h: 72 }, { l: '7d', h: 168 }].map(p => (
+            {[{ l: '1h', h: 1 }, { l: '6h', h: 6 }, { l: '24h', h: 24 }].map(p => (
               <Button key={p.h} variant={period === p.h ? "default" : "outline"} size="sm" onClick={() => setPeriod(p.h)}>
                 {p.l}
               </Button>
             ))}
           </div>
-          <Button variant="outline" size="sm" onClick={exportCSV}>
+          <Button variant="outline" size="sm" onClick={exportCSV} disabled={filtered.length === 0}>
             <Download className="w-3 h-3 mr-1" /> Exportar CSV
           </Button>
         </div>
       </div>
 
-      {/* Column Chart overview */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Visão Geral do Período</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="time" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Legend wrapperStyle={{ fontSize: '11px' }} />
-                <Bar dataKey="umidade" fill="hsl(var(--chart-1))" radius={[3, 3, 0, 0]} name="Umidade %" maxBarSize={16} />
-                <Bar dataKey="temperatura" fill="hsl(var(--chart-3))" radius={[3, 3, 0, 0]} name="Temp °C" maxBarSize={16} />
-                <Bar dataKey="agua" fill="hsl(var(--chart-2))" radius={[3, 3, 0, 0]} name="Água %" maxBarSize={16} />
-                <Bar dataKey="ar" fill="hsl(var(--chart-4))" radius={[3, 3, 0, 0]} name="Ar AQI" maxBarSize={16} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+      {filtered.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center text-muted-foreground">
+            <p className="text-sm">Sem dados históricos para o período selecionado</p>
+            <p className="text-xs">Os dados serão exibidos quando o ESP32 enviar leituras</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Visão Geral do Período</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="time" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                    <Tooltip contentStyle={tooltipStyle} />
+                    <Legend wrapperStyle={{ fontSize: '11px' }} />
+                    <Bar dataKey="umidade" fill="hsl(var(--chart-1))" radius={[3, 3, 0, 0]} name="Umidade %" maxBarSize={16} />
+                    <Bar dataKey="temperatura" fill="hsl(var(--chart-3))" radius={[3, 3, 0, 0]} name="Temp °C" maxBarSize={16} />
+                    <Bar dataKey="agua" fill="hsl(var(--chart-2))" radius={[3, 3, 0, 0]} name="Água %" maxBarSize={16} />
+                    <Bar dataKey="ar" fill="hsl(var(--chart-4))" radius={[3, 3, 0, 0]} name="Ar AQI" maxBarSize={16} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data/Hora</TableHead>
-                  <TableHead>Umidade (%)</TableHead>
-                  <TableHead>Temp (°C)</TableHead>
-                  <TableHead>Água (%)</TableHead>
-                  <TableHead>Ar (AQI)</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {displayed.map((d, i) => (
-                  <TableRow key={i}>
-                    <TableCell className="text-xs">{d.timestamp.toLocaleString('pt-BR')}</TableCell>
-                    <TableCell>{d.soilMoisture}</TableCell>
-                    <TableCell>{d.temperature}</TableCell>
-                    <TableCell>{d.waterLevel}</TableCell>
-                    <TableCell>{d.airQuality}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data/Hora</TableHead>
+                      <TableHead>Umidade (%)</TableHead>
+                      <TableHead>Temp (°C)</TableHead>
+                      <TableHead>Água (%)</TableHead>
+                      <TableHead>Ar (AQI)</TableHead>
+                      <TableHead>Chama</TableHead>
+                      <TableHead>Fumaça</TableHead>
+                      <TableHead>LDR</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {displayed.map((d, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="text-xs">{d.timestamp.toLocaleString('pt-BR')}</TableCell>
+                        <TableCell>{d.soilMoisture}</TableCell>
+                        <TableCell>{d.temperature}</TableCell>
+                        <TableCell>{d.waterLevel}</TableCell>
+                        <TableCell>{d.airQuality}</TableCell>
+                        <TableCell>{d.flameDetected}</TableCell>
+                        <TableCell>{d.smokeLevel}</TableCell>
+                        <TableCell>{d.ldrValue}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 }

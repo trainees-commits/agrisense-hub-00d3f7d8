@@ -1,19 +1,28 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSensorData } from "@/hooks/useSensorData";
-import { getAirQualityLabel, getStatusColor } from "@/lib/mockData";
+import { getAirQualityLabel, getStatusColor, emptySensorData } from "@/lib/mockData";
 import { GaugeChart } from "@/components/GaugeChart";
-import { Wind } from "lucide-react";
+import { Wind, Loader2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 export default function AirQualityPage() {
-  const { current, getFilteredHistory } = useSensorData();
-  const aqi = current.airQuality;
+  const { current, getFilteredHistory, loading } = useSensorData();
+  const data = current || emptySensorData;
+  const aqi = data.airQuality;
   const label = getAirQualityLabel(aqi);
   const status = getStatusColor(aqi, 'air');
   const colorMap = { good: 'text-success', warning: 'text-warning', danger: 'text-destructive' };
   const bgMap = { good: 'bg-success/10', warning: 'bg-warning/10', danger: 'bg-destructive/10' };
 
-  const data = getFilteredHistory(12)
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const histData = getFilteredHistory(12)
     .filter((_, i) => i % 3 === 0)
     .map(d => ({
       time: d.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
@@ -67,19 +76,23 @@ export default function AirQualityPage() {
           </CardHeader>
           <CardContent>
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="time" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Bar dataKey="aqi" radius={[4, 4, 0, 0]} name="AQI" maxBarSize={28}>
-                    {data.map((entry, index) => (
-                      <Cell key={index} fill={getBarColor(entry.aqi)} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              {histData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={histData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="time" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                    <Tooltip contentStyle={tooltipStyle} />
+                    <Bar dataKey="aqi" radius={[4, 4, 0, 0]} name="AQI" maxBarSize={28}>
+                      {histData.map((entry, index) => (
+                        <Cell key={index} fill={getBarColor(entry.aqi)} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados históricos</div>
+              )}
             </div>
           </CardContent>
         </Card>

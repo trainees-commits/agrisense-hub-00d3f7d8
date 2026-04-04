@@ -1,9 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Cpu, Droplets, Waves, Thermometer, Flame, Wind, Sun, CircleDot, Lightbulb, CloudSun } from "lucide-react";
+import { Cpu, Droplets, Waves, Thermometer, Flame, Wind, Sun, CircleDot, Lightbulb, CloudSun, WifiOff } from "lucide-react";
 import { useSensorData } from "@/hooks/useSensorData";
-import { generateDevices } from "@/lib/mockData";
+import { generateDevices, emptySensorData } from "@/lib/mockData";
 
 const typeIcons: Record<string, React.ElementType> = {
   Processador: Cpu,
@@ -15,8 +15,9 @@ const typeIcons: Record<string, React.ElementType> = {
 };
 
 export default function DevicesPage() {
-  const { current } = useSensorData();
-  const devices = generateDevices(current);
+  const { current, isConnected, lastReceived } = useSensorData();
+  const data = current || emptySensorData;
+  const devices = generateDevices(data, isConnected, lastReceived);
   const online = devices.filter(d => d.status === 'online').length;
 
   return (
@@ -27,17 +28,23 @@ export default function DevicesPage() {
       </div>
 
       {/* ESP32 Status Card */}
-      <Card className="border-l-4 border-l-primary">
+      <Card className={`border-l-4 ${isConnected ? 'border-l-primary' : 'border-l-destructive'}`}>
         <CardContent className="flex items-center gap-4 p-4">
-          <div className="p-3 rounded-lg bg-primary/10">
-            <Cpu className="w-6 h-6 text-primary" />
+          <div className={`p-3 rounded-lg ${isConnected ? 'bg-primary/10' : 'bg-destructive/10'}`}>
+            <Cpu className={`w-6 h-6 ${isConnected ? 'text-primary' : 'text-destructive'}`} />
           </div>
           <div className="flex-1">
             <p className="font-semibold text-sm">ESP32 - Processador Principal</p>
-            <p className="text-xs text-muted-foreground">Nó central de aquisição de dados — Comunicação MQTT/HTTPS</p>
+            <p className="text-xs text-muted-foreground">
+              {isConnected 
+                ? `Nó central de aquisição de dados — Última leitura: ${lastReceived?.toLocaleString('pt-BR') || 'N/A'}`
+                : 'Sem comunicação — Verifique a conexão do ESP32'
+              }
+            </p>
           </div>
-          <Badge variant="default" className="text-xs flex items-center gap-1">
-            <CircleDot className="w-3 h-3" /> Online
+          <Badge variant={isConnected ? "default" : "destructive"} className="text-xs flex items-center gap-1">
+            {isConnected ? <CircleDot className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+            {isConnected ? 'Online' : 'Offline'}
           </Badge>
         </CardContent>
       </Card>
@@ -102,15 +109,21 @@ export default function DevicesPage() {
             <div>
               <p className="text-sm font-medium">Controle de Iluminação (LDR)</p>
               <p className="text-xs text-muted-foreground">
-                Luminosidade atual: <strong>{current.ldrValue} lux</strong> — 
-                {current.ldrValue < 300 && (
-                  <span className="inline-flex items-center gap-1 ml-1"><Lightbulb className="w-3 h-3 inline" /> Luzes acionadas automaticamente (ambiente escuro)</span>
-                )}
-                {current.ldrValue >= 300 && current.ldrValue < 600 && (
-                  <span className="inline-flex items-center gap-1 ml-1"><CloudSun className="w-3 h-3 inline" /> Iluminação parcial</span>
-                )}
-                {current.ldrValue >= 600 && (
-                  <span className="inline-flex items-center gap-1 ml-1"><Sun className="w-3 h-3 inline" /> Luz natural suficiente — luzes desligadas</span>
+                {!isConnected ? (
+                  <span>Sem dados — ESP32 offline</span>
+                ) : (
+                  <>
+                    Luminosidade atual: <strong>{data.ldrValue} lux</strong> — 
+                    {data.ldrValue < 300 && (
+                      <span className="inline-flex items-center gap-1 ml-1"><Lightbulb className="w-3 h-3 inline" /> Luzes acionadas automaticamente (ambiente escuro)</span>
+                    )}
+                    {data.ldrValue >= 300 && data.ldrValue < 600 && (
+                      <span className="inline-flex items-center gap-1 ml-1"><CloudSun className="w-3 h-3 inline" /> Iluminação parcial</span>
+                    )}
+                    {data.ldrValue >= 600 && (
+                      <span className="inline-flex items-center gap-1 ml-1"><Sun className="w-3 h-3 inline" /> Luz natural suficiente — luzes desligadas</span>
+                    )}
+                  </>
                 )}
               </p>
             </div>

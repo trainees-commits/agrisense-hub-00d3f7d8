@@ -1,16 +1,27 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSensorData } from "@/hooks/useSensorData";
+import { emptySensorData } from "@/lib/mockData";
 import { GaugeChart } from "@/components/GaugeChart";
 import { Progress } from "@/components/ui/progress";
+import { Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 export default function ReservoirPage() {
-  const { current, getFilteredHistory } = useSensorData();
-  const level = current.waterLevel;
+  const { current, getFilteredHistory, loading } = useSensorData();
+  const data = current || emptySensorData;
+  const level = data.waterLevel;
   const risk = level > 50 ? 'Baixo' : level > 25 ? 'Médio' : 'Alto';
   const riskColor = level > 50 ? 'text-success' : level > 25 ? 'text-warning' : 'text-destructive';
 
-  const data = getFilteredHistory(24)
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const histData = getFilteredHistory(24)
     .filter((_, i) => i % 4 === 0)
     .map(d => ({
       time: d.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
@@ -60,16 +71,20 @@ export default function ReservoirPage() {
           </CardHeader>
           <CardContent>
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="time" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" domain={[0, 100]} />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Legend wrapperStyle={{ fontSize: '11px' }} />
-                  <Line type="monotone" dataKey="nivel" stroke="hsl(var(--chart-2))" strokeWidth={2.5} dot={{ r: 3, fill: 'hsl(var(--chart-2))' }} activeDot={{ r: 6 }} name="Nível %" />
-                </LineChart>
-              </ResponsiveContainer>
+              {histData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={histData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="time" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" domain={[0, 100]} />
+                    <Tooltip contentStyle={tooltipStyle} />
+                    <Legend wrapperStyle={{ fontSize: '11px' }} />
+                    <Line type="monotone" dataKey="nivel" stroke="hsl(var(--chart-2))" strokeWidth={2.5} dot={{ r: 3, fill: 'hsl(var(--chart-2))' }} activeDot={{ r: 6 }} name="Nível %" />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados históricos</div>
+              )}
             </div>
           </CardContent>
         </Card>

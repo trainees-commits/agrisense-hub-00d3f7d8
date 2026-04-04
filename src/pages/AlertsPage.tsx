@@ -2,21 +2,42 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Flame, Droplets, Thermometer, Wind, Check } from "lucide-react";
-import { mockAlerts, Alert } from "@/lib/mockData";
-import { useState } from "react";
+import { Alert, generateAlertsFromData } from "@/lib/mockData";
+import { useSensorData } from "@/hooks/useSensorData";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 const typeIcons: Record<string, typeof Flame> = { fire: Flame, water: Droplets, temperature: Thermometer, air: Wind, smoke: Wind };
 const severityLabels: Record<string, string> = { critical: 'Crítico', high: 'Alto', medium: 'Médio', low: 'Baixo' };
 
 export default function AlertsPage() {
-  const [alerts, setAlerts] = useState<Alert[]>(mockAlerts);
+  const { current } = useSensorData();
+  const [resolvedIds, setResolvedIds] = useState<Set<string>>(new Set());
+  const [alertHistory, setAlertHistory] = useState<Alert[]>([]);
   const [filter, setFilter] = useState<'all' | 'active' | 'resolved'>('all');
 
+  // Accumulate alerts from real-time data
+  useEffect(() => {
+    if (!current) return;
+    const newAlerts = generateAlertsFromData(current);
+    if (newAlerts.length > 0) {
+      setAlertHistory(prev => {
+        const existing = new Set(prev.map(a => a.type + '-' + a.severity));
+        const fresh = newAlerts.filter(a => !existing.has(a.type + '-' + a.severity));
+        return [...fresh, ...prev].slice(0, 50);
+      });
+    }
+  }, [current]);
+
   const resolveAlert = (id: string) => {
-    setAlerts(prev => prev.map(a => a.id === id ? { ...a, resolved: true } : a));
+    setResolvedIds(prev => new Set(prev).add(id));
     toast.success('Alerta marcado como resolvido');
   };
+
+  const alerts = alertHistory.map(a => ({
+    ...a,
+    resolved: resolvedIds.has(a.id),
+  }));
 
   const filtered = alerts.filter(a => {
     if (filter === 'active') return !a.resolved;
@@ -41,6 +62,15 @@ export default function AlertsPage() {
       </div>
 
       <div className="space-y-3">
+        {filtered.length === 0 && (
+          <Card>
+            <CardContent className="p-8 text-center text-muted-foreground">
+              <AlertTriangle className="w-8 h-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">Nenhum alerta registado</p>
+              <p className="text-xs">Os alertas serão gerados automaticamente com base nos limites dos sensores</p>
+            </CardContent>
+          </Card>
+        )}
         {filtered.map(alert => {
           const Icon = typeIcons[alert.type];
           return (
