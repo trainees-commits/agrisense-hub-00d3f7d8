@@ -13,7 +13,8 @@ export default function OverviewPage() {
   const { current, getFilteredHistory, loading, isConnected } = useSensorData();
   const data = current || emptySensorData;
   useAlertSound(data);
-  const activeAlerts = current ? generateAlertsFromData(data) : [];
+  const { alerts: allAlerts } = useAlerts();
+  const activeAlerts = allAlerts.filter(a => !a.resolved);
 
   if (loading) {
     return (
