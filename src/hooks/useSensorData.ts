@@ -20,10 +20,21 @@ export function useSensorData() {
     ldrValue: Number(row.ldr_value) || 0,
   }), []);
 
-  // Fetch initial data — last 24h
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+  const mergeReading = useCallback((reading: SensorData) => {
+    setCurrent(reading);
+    setLastReceived(reading.timestamp);
+    setHistory(prev => {
+      const next = [...prev.filter(item => item.timestamp.getTime() !== reading.timestamp.getTime()), reading]
+        .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+      return next.slice(-1000);
+    });
+  }, []);
+
+  const fetchData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+
+    try {
       const since = new Date(Date.now() - 24 * 3600000).toISOString();
 
       const { data, error } = await supabase
@@ -33,18 +44,34 @@ export function useSensorData() {
         .order('created_at', { ascending: true })
         .limit(1000);
 
-      if (!error && data && data.length > 0) {
-        const mapped = data.map(mapRow);
-        setHistory(mapped);
-        const latest = mapped[mapped.length - 1];
-        setCurrent(latest);
-        setLastReceived(latest.timestamp);
-      }
-      setLoading(false);
-    };
+      if (!error) {
+        const mapped = (data ?? []).map(mapRow);
+        const latest = mapped.length > 0 ? mapped[mapped.length - 1] : null;
 
-    fetchData();
+        setHistory(mapped);
+        setCurrent(latest);
+        setLastReceived(latest?.timestamp ?? null);
+      }
+    } finally {
+      if (!silent) setLoading(false);
+    }
   }, [mapRow]);
+
+  // Fetch initial data — last 24h
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Polling fallback to keep the dashboard fresh even if the realtime socket drops
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      fetchData(true);
+    }, 15000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [fetchData]);
 
   // Realtime subscription
   useEffect(() => {
@@ -52,20 +79,26 @@ export function useSensorData() {
       .channel('sensor_readings_realtime')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'sensor_readings' },
+        { event: '*', schema: 'public', table: 'sensor_readings' },
         (payload) => {
-          const newData = mapRow(payload.new);
-          setCurrent(newData);
-          setLastReceived(new Date());
-          setHistory(prev => [...prev.slice(-500), newData]);
+          if (payload.eventType === 'INSERT') {
+            mergeReading(mapRow(payload.new));
+            return;
+          }
+
+          fetchData(true);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          fetchData(true);
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [mapRow]);
+  }, [fetchData, mapRow, mergeReading]);
 
   const getFilteredHistory = useCallback((hours: number) => {
     const cutoff = Date.now() - hours * 3600000;

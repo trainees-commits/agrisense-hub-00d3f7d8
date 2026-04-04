@@ -6,6 +6,8 @@ import { useSensorData } from "@/hooks/useSensorData";
 import { useState } from "react";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const tooltipStyle = {
   background: 'hsl(var(--card))',
@@ -47,6 +49,56 @@ export default function HistoryPage() {
     toast.success('Arquivo CSV exportado!');
   };
 
+  const exportPDF = () => {
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const generatedAt = new Date().toLocaleString('pt-BR');
+
+    doc.setFontSize(16);
+    doc.text('Historico de Leituras dos Sensores', 14, 16);
+    doc.setFontSize(10);
+    doc.text(`Periodo analisado: ultimas ${period}h`, 14, 23);
+    doc.text(`Registos exportados: ${filtered.length}`, 90, 23);
+    doc.text(`Gerado em: ${generatedAt}`, 180, 23);
+
+    autoTable(doc, {
+      startY: 28,
+      head: [[
+        'Data/Hora',
+        'Umidade (%)',
+        'Temp (C)',
+        'Agua (%)',
+        'Ar (AQI)',
+        'Chama',
+        'Fumaca',
+        'LDR',
+      ]],
+      body: filtered.map(d => [
+        d.timestamp.toLocaleString('pt-BR'),
+        `${d.soilMoisture}`,
+        `${d.temperature}`,
+        `${d.waterLevel}`,
+        `${d.airQuality}`,
+        `${d.flameDetected}`,
+        `${d.smokeLevel}`,
+        `${d.ldrValue}`,
+      ]),
+      styles: {
+        fontSize: 7,
+        cellPadding: 1.5,
+      },
+      headStyles: {
+        fillColor: [39, 110, 74],
+      },
+      alternateRowStyles: {
+        fillColor: [245, 248, 246],
+      },
+      margin: { top: 28, left: 12, right: 12, bottom: 12 },
+    });
+
+    doc.save(`sensores_${period}h.pdf`);
+    toast.success('Arquivo PDF exportado!');
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -71,6 +123,9 @@ export default function HistoryPage() {
               </Button>
             ))}
           </div>
+          <Button variant="outline" size="sm" onClick={exportPDF} disabled={filtered.length === 0}>
+            <Download className="w-3 h-3 mr-1" /> Exportar PDF
+          </Button>
           <Button variant="outline" size="sm" onClick={exportCSV} disabled={filtered.length === 0}>
             <Download className="w-3 h-3 mr-1" /> Exportar CSV
           </Button>
