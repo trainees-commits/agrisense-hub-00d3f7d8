@@ -4,9 +4,9 @@ export interface SensorData {
   temperature: number;
   waterLevel: number;
   airQuality: number;
-  flameDetected: number;    // 0 = no flame (sensor offline/safe), >0 = flame intensity
-  smokeLevel: number;       // 0 = no smoke (sensor offline), >0 = smoke density
-  ldrValue: number;         // 0-1023 light intensity (0 = dark, 1023 = bright)
+  flameDetected: number;
+  smokeLevel: number;
+  ldrValue: number;
 }
 
 export interface Alert {
@@ -29,125 +29,94 @@ export interface Device {
   unit?: string;
 }
 
-const rand = (min: number, max: number) => Math.round((Math.random() * (max - min) + min) * 10) / 10;
+// Empty default for when no data is available
+export const emptySensorData: SensorData = {
+  timestamp: new Date(),
+  soilMoisture: 0,
+  temperature: 0,
+  waterLevel: 0,
+  airQuality: 0,
+  flameDetected: 0,
+  smokeLevel: 0,
+  ldrValue: 0,
+};
 
-export function generateCurrentData(): SensorData {
-  return {
-    timestamp: new Date(),
-    soilMoisture: rand(30, 85),
-    temperature: rand(18, 42),
-    waterLevel: rand(15, 95),
-    airQuality: rand(20, 180),
-    flameDetected: Math.random() > 0.9 ? rand(100, 900) : 0,
-    smokeLevel: Math.random() > 0.85 ? rand(50, 500) : 0,
-    ldrValue: rand(100, 900),
-  };
-}
-
-export function generateHistoricalData(hours: number): SensorData[] {
-  const data: SensorData[] = [];
-  const now = Date.now();
-  for (let i = hours * 6; i >= 0; i--) {
-    data.push({
-      timestamp: new Date(now - i * 10 * 60 * 1000),
-      soilMoisture: rand(35, 80),
-      temperature: rand(20, 38),
-      waterLevel: rand(20, 90),
-      airQuality: rand(30, 150),
-      flameDetected: 0,
-      smokeLevel: 0,
-      ldrValue: rand(100, 900),
-    });
-  }
-  return data;
-}
-
-// Generate device list based on current sensor data
-export function generateDevices(sensorData: SensorData): Device[] {
-  const esp32Online = true; // ESP32 is the main controller
-
+// Generate device list based on current sensor data and connection status
+export function generateDevices(sensorData: SensorData, isConnected: boolean, lastReceived: Date | null): Device[] {
+  const lastComm = lastReceived || new Date(0);
+  
   return [
     {
       id: 'ESP32-001',
       name: 'ESP32 - Processador Principal',
-      status: esp32Online ? 'online' : 'offline',
-      lastCommunication: new Date(),
+      status: isConnected ? 'online' : 'offline',
+      lastCommunication: lastComm,
       location: 'Central de Controle',
       type: 'Processador',
-      value: esp32Online ? 'Ativo' : 'Inativo',
+      value: isConnected ? 'Ativo' : 'Inativo',
     },
     {
       id: 'SNS-HUM-001',
       name: 'Sensor de Humidade do Solo',
-      status: esp32Online && sensorData.soilMoisture > 0 ? 'online' : 'offline',
-      lastCommunication: new Date(),
+      status: isConnected && sensorData.soilMoisture > 0 ? 'online' : 'offline',
+      lastCommunication: lastComm,
       location: 'Setor A - Lote 1',
       type: 'Humidade',
-      value: sensorData.soilMoisture,
-      unit: '%',
+      value: isConnected ? sensorData.soilMoisture : 'Sem dados',
+      unit: isConnected && sensorData.soilMoisture > 0 ? '%' : undefined,
     },
     {
       id: 'SNS-NIV-001',
       name: 'Sensor de Nível de Água',
-      status: esp32Online && sensorData.waterLevel > 0 ? 'online' : 'offline',
-      lastCommunication: new Date(Date.now() - 60000),
+      status: isConnected && sensorData.waterLevel > 0 ? 'online' : 'offline',
+      lastCommunication: lastComm,
       location: 'Reservatório Principal',
       type: 'Nível',
-      value: sensorData.waterLevel,
-      unit: '%',
+      value: isConnected ? sensorData.waterLevel : 'Sem dados',
+      unit: isConnected && sensorData.waterLevel > 0 ? '%' : undefined,
     },
     {
       id: 'SNS-TMP-001',
       name: 'Sensor de Temperatura',
-      status: esp32Online && sensorData.temperature > 0 ? 'online' : 'offline',
-      lastCommunication: new Date(),
+      status: isConnected && sensorData.temperature > 0 ? 'online' : 'offline',
+      lastCommunication: lastComm,
       location: 'Setor A - Lote 1',
       type: 'Temperatura',
-      value: sensorData.temperature,
-      unit: '°C',
+      value: isConnected ? sensorData.temperature : 'Sem dados',
+      unit: isConnected && sensorData.temperature > 0 ? '°C' : undefined,
     },
     {
       id: 'SNS-FLM-001',
       name: 'Sensor de Chamas',
-      status: esp32Online ? (sensorData.flameDetected > 0 ? 'online' : 'offline') : 'offline',
-      lastCommunication: sensorData.flameDetected > 0 ? new Date() : new Date(Date.now() - 3600000),
+      status: isConnected ? (sensorData.flameDetected > 0 ? 'online' : 'offline') : 'offline',
+      lastCommunication: lastComm,
       location: 'Setor C - Perímetro',
       type: 'Segurança',
-      value: sensorData.flameDetected > 0 ? `${sensorData.flameDetected}` : 'Sem detecção',
+      value: isConnected && sensorData.flameDetected > 0 ? `${sensorData.flameDetected}` : 'Sem detecção',
       unit: sensorData.flameDetected > 0 ? 'IR' : undefined,
     },
     {
       id: 'SNS-SMK-001',
       name: 'Sensor de Fumaça',
-      status: esp32Online ? (sensorData.smokeLevel > 0 ? 'online' : 'offline') : 'offline',
-      lastCommunication: sensorData.smokeLevel > 0 ? new Date() : new Date(Date.now() - 7200000),
+      status: isConnected ? (sensorData.smokeLevel > 0 ? 'online' : 'offline') : 'offline',
+      lastCommunication: lastComm,
       location: 'Setor C - Perímetro',
       type: 'Segurança',
-      value: sensorData.smokeLevel > 0 ? `${sensorData.smokeLevel}` : 'Sem detecção',
+      value: isConnected && sensorData.smokeLevel > 0 ? `${sensorData.smokeLevel}` : 'Sem detecção',
       unit: sensorData.smokeLevel > 0 ? 'ppm' : undefined,
     },
     {
       id: 'SNS-LDR-001',
       name: 'Sensor LDR - Luminosidade',
-      status: esp32Online && sensorData.ldrValue > 0 ? 'online' : 'offline',
-      lastCommunication: new Date(),
+      status: isConnected && sensorData.ldrValue > 0 ? 'online' : 'offline',
+      lastCommunication: lastComm,
       location: 'Área Externa',
       type: 'Luminosidade',
-      value: sensorData.ldrValue,
-      unit: 'lux',
+      value: isConnected ? sensorData.ldrValue : 'Sem dados',
+      unit: isConnected && sensorData.ldrValue > 0 ? 'lux' : undefined,
     },
   ];
 }
-
-export const mockAlerts: Alert[] = [
-  { id: '1', type: 'temperature', severity: 'high', message: 'Temperatura acima de 38°C no Setor A', timestamp: new Date(Date.now() - 300000), resolved: false },
-  { id: '2', type: 'water', severity: 'critical', message: 'Nível de água do reservatório abaixo de 20%', timestamp: new Date(Date.now() - 600000), resolved: false },
-  { id: '3', type: 'air', severity: 'medium', message: 'Qualidade do ar em nível de atenção', timestamp: new Date(Date.now() - 1200000), resolved: false },
-  { id: '4', type: 'fire', severity: 'critical', message: 'Sensor de chamas ativado no Setor C', timestamp: new Date(Date.now() - 1800000), resolved: true },
-  { id: '5', type: 'water', severity: 'low', message: 'Irrigação do Setor B concluída', timestamp: new Date(Date.now() - 3600000), resolved: true },
-  { id: '6', type: 'smoke', severity: 'high', message: 'Fumaça detectada no Setor C - nível elevado', timestamp: new Date(Date.now() - 5400000), resolved: true },
-  { id: '7', type: 'temperature', severity: 'medium', message: 'Temperatura subindo rapidamente no Setor D', timestamp: new Date(Date.now() - 7200000), resolved: true },
-];
 
 export function getStatusColor(value: number, type: 'moisture' | 'temperature' | 'water' | 'air'): 'good' | 'warning' | 'danger' {
   switch (type) {
@@ -175,4 +144,34 @@ export function getSeverityColor(severity: string) {
     case 'medium': return 'warning';
     default: return 'secondary';
   }
+}
+
+// Generate alerts from current sensor data thresholds
+export function generateAlertsFromData(data: SensorData): Alert[] {
+  const alerts: Alert[] = [];
+  const now = data.timestamp;
+
+  if (data.flameDetected > 0) {
+    alerts.push({ id: `flame-${now.getTime()}`, type: 'fire', severity: 'critical', message: `Sensor de chamas ativado — Intensidade: ${data.flameDetected}`, timestamp: now, resolved: false });
+  }
+  if (data.smokeLevel > 200) {
+    alerts.push({ id: `smoke-${now.getTime()}`, type: 'smoke', severity: 'high', message: `Fumaça em nível elevado: ${data.smokeLevel} ppm`, timestamp: now, resolved: false });
+  }
+  if (data.temperature >= 40) {
+    alerts.push({ id: `temp-${now.getTime()}`, type: 'temperature', severity: 'critical', message: `Temperatura crítica: ${data.temperature}°C`, timestamp: now, resolved: false });
+  }
+  if (data.temperature >= 35 && data.temperature < 40) {
+    alerts.push({ id: `temp-warn-${now.getTime()}`, type: 'temperature', severity: 'medium', message: `Temperatura elevada: ${data.temperature}°C`, timestamp: now, resolved: false });
+  }
+  if (data.waterLevel <= 15) {
+    alerts.push({ id: `water-${now.getTime()}`, type: 'water', severity: 'critical', message: `Nível de água crítico: ${data.waterLevel}%`, timestamp: now, resolved: false });
+  }
+  if (data.waterLevel > 15 && data.waterLevel <= 25) {
+    alerts.push({ id: `water-warn-${now.getTime()}`, type: 'water', severity: 'medium', message: `Nível de água baixo: ${data.waterLevel}%`, timestamp: now, resolved: false });
+  }
+  if (data.airQuality >= 100) {
+    alerts.push({ id: `air-${now.getTime()}`, type: 'air', severity: 'high', message: `Qualidade do ar perigosa: ${data.airQuality} AQI`, timestamp: now, resolved: false });
+  }
+
+  return alerts;
 }
