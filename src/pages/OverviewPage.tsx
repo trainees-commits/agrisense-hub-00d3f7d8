@@ -3,7 +3,8 @@ import { StatCard } from "@/components/StatCard";
 import { GaugeChart } from "@/components/GaugeChart";
 import { useSensorData } from "@/hooks/useSensorData";
 import { useAlertSound } from "@/hooks/useAlertSound";
-import { getStatusColor, generateAlertsFromData, emptySensorData } from "@/lib/mockData";
+import { useAlerts } from "@/hooks/useAlerts";
+import { getStatusColor, emptySensorData } from "@/lib/mockData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,8 @@ export default function OverviewPage() {
   const { current, getFilteredHistory, loading, isConnected } = useSensorData();
   const data = current || emptySensorData;
   useAlertSound(data);
-  const activeAlerts = current ? generateAlertsFromData(data) : [];
+  const { alerts: allAlerts } = useAlerts();
+  const activeAlerts = allAlerts.filter(a => !a.resolved);
 
   if (loading) {
     return (

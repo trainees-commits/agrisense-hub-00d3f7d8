@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      alerts: {
+        Row: {
+          created_at: string
+          device_id: string
+          id: string
+          message: string
+          resolved: boolean
+          resolved_at: string | null
+          severity: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          device_id?: string
+          id?: string
+          message: string
+          resolved?: boolean
+          resolved_at?: string | null
+          severity: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          id?: string
+          message?: string
+          resolved?: boolean
+          resolved_at?: string | null
+          severity?: string
+          type?: string
+        }
+        Relationships: []
+      }
       sensor_readings: {
         Row: {
           air_quality: number | null

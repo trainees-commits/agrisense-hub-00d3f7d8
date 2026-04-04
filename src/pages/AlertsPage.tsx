@@ -1,49 +1,38 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Flame, Droplets, Thermometer, Wind, Check } from "lucide-react";
-import { Alert, generateAlertsFromData } from "@/lib/mockData";
-import { useSensorData } from "@/hooks/useSensorData";
-import { useState, useEffect } from "react";
+import { AlertTriangle, Flame, Droplets, Thermometer, Wind, Check, Loader2 } from "lucide-react";
+import { useAlerts } from "@/hooks/useAlerts";
+import { useState } from "react";
 import { toast } from "sonner";
 
 const typeIcons: Record<string, typeof Flame> = { fire: Flame, water: Droplets, temperature: Thermometer, air: Wind, smoke: Wind };
 const severityLabels: Record<string, string> = { critical: 'Crítico', high: 'Alto', medium: 'Médio', low: 'Baixo' };
 
 export default function AlertsPage() {
-  const { current } = useSensorData();
-  const [resolvedIds, setResolvedIds] = useState<Set<string>>(new Set());
-  const [alertHistory, setAlertHistory] = useState<Alert[]>([]);
+  const { alerts, loading, resolveAlert } = useAlerts();
   const [filter, setFilter] = useState<'all' | 'active' | 'resolved'>('all');
 
-  // Accumulate alerts from real-time data
-  useEffect(() => {
-    if (!current) return;
-    const newAlerts = generateAlertsFromData(current);
-    if (newAlerts.length > 0) {
-      setAlertHistory(prev => {
-        const existing = new Set(prev.map(a => a.type + '-' + a.severity));
-        const fresh = newAlerts.filter(a => !existing.has(a.type + '-' + a.severity));
-        return [...fresh, ...prev].slice(0, 50);
-      });
-    }
-  }, [current]);
-
-  const resolveAlert = (id: string) => {
-    setResolvedIds(prev => new Set(prev).add(id));
-    toast.success('Alerta marcado como resolvido');
+  const handleResolve = async (id: string) => {
+    const ok = await resolveAlert(id);
+    if (ok) toast.success('Alerta marcado como resolvido');
+    else toast.error('Erro ao resolver alerta');
   };
-
-  const alerts = alertHistory.map(a => ({
-    ...a,
-    resolved: resolvedIds.has(a.id),
-  }));
 
   const filtered = alerts.filter(a => {
     if (filter === 'active') return !a.resolved;
     if (filter === 'resolved') return a.resolved;
     return true;
   });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">A carregar alertas...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -67,16 +56,16 @@ export default function AlertsPage() {
             <CardContent className="p-8 text-center text-muted-foreground">
               <AlertTriangle className="w-8 h-8 mx-auto mb-2 opacity-30" />
               <p className="text-sm">Nenhum alerta registado</p>
-              <p className="text-xs">Os alertas serão gerados automaticamente com base nos limites dos sensores</p>
+              <p className="text-xs">Os alertas são gerados automaticamente pelo sistema quando os sensores ultrapassam os limites definidos</p>
             </CardContent>
           </Card>
         )}
         {filtered.map(alert => {
-          const Icon = typeIcons[alert.type];
+          const Icon = typeIcons[alert.type] || AlertTriangle;
           return (
             <Card key={alert.id} className={`${alert.severity === 'critical' && !alert.resolved ? 'border-destructive/50 bg-destructive/5' : ''} ${alert.resolved ? 'opacity-60' : ''}`}>
               <CardContent className="flex items-center gap-4 p-4">
-                <div className={`p-2 rounded-lg ${alert.severity === 'critical' ? 'bg-destructive/10 text-destructive' : alert.severity === 'high' ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning'}`}>
+                <div className={`p-2 rounded-lg ${alert.severity === 'critical' || alert.severity === 'high' ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning'}`}>
                   <Icon className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -87,7 +76,7 @@ export default function AlertsPage() {
                   {severityLabels[alert.severity]}
                 </Badge>
                 {!alert.resolved && (
-                  <Button size="sm" variant="outline" onClick={() => resolveAlert(alert.id)}>
+                  <Button size="sm" variant="outline" onClick={() => handleResolve(alert.id)}>
                     <Check className="w-3 h-3 mr-1" /> Resolver
                   </Button>
                 )}
