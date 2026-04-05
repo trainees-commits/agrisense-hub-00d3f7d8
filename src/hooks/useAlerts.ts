@@ -36,22 +36,20 @@ export function useAlerts() {
 
   // Realtime subscription
   useEffect(() => {
+    const channelName = `alerts_rt_${Math.random().toString(36).slice(2)}`;
     const channel = supabase
-      .channel('alerts_realtime')
+      .channel(channelName)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'alerts' },
+        { event: '*', schema: 'public', table: 'alerts' },
         (payload) => {
-          const newAlert = mapRow(payload.new);
-          setAlerts(prev => [newAlert, ...prev].slice(0, 100));
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'alerts' },
-        (payload) => {
-          const updated = mapRow(payload.new);
-          setAlerts(prev => prev.map(a => a.id === updated.id ? updated : a));
+          if (payload.eventType === 'INSERT') {
+            const newAlert = mapRow(payload.new);
+            setAlerts(prev => [newAlert, ...prev].slice(0, 100));
+          } else if (payload.eventType === 'UPDATE') {
+            const updated = mapRow(payload.new);
+            setAlerts(prev => prev.map(a => a.id === updated.id ? updated : a));
+          }
         }
       )
       .subscribe();
