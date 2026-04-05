@@ -1,7 +1,7 @@
 import { Bell, LogOut, User, Wifi, AlertTriangle, Flame, Droplets, Thermometer, Wind } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAlerts } from "@/hooks/useAlerts";
 import { toast } from "sonner";
@@ -28,9 +28,23 @@ export function DashboardHeader() {
   const { user, signOut } = useAuth();
   const { alerts } = useAlerts();
   const navigate = useNavigate();
+  const [readIds, setReadIds] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('readAlertIds');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch { return new Set(); }
+  });
 
   const activeAlerts = alerts.filter(a => !a.resolved);
+  const unreadCount = useMemo(() => activeAlerts.filter(a => !readIds.has(a.id)).length, [activeAlerts, readIds]);
   const recentAlerts = activeAlerts.slice(0, 5);
+
+  const markAllRead = useCallback(() => {
+    const newReadIds = new Set(readIds);
+    activeAlerts.forEach(a => newReadIds.add(a.id));
+    setReadIds(newReadIds);
+    localStorage.setItem('readAlertIds', JSON.stringify([...newReadIds]));
+  }, [activeAlerts, readIds]);
 
   useEffect(() => {
     const i = setInterval(() => setOnline(Math.random() > 0.05), 10000);
@@ -52,13 +66,13 @@ export function DashboardHeader() {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <DropdownMenu>
+        <DropdownMenu onOpenChange={(open) => { if (open) markAllRead(); }}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="w-4 h-4" />
-              {activeAlerts.length > 0 && (
+              {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center">
-                  {activeAlerts.length > 9 ? '9+' : activeAlerts.length}
+                  {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
             </Button>
