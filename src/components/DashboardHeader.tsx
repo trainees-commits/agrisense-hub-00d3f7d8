@@ -28,9 +28,23 @@ export function DashboardHeader() {
   const { user, signOut } = useAuth();
   const { alerts } = useAlerts();
   const navigate = useNavigate();
+  const [readIds, setReadIds] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('readAlertIds');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch { return new Set(); }
+  });
 
   const activeAlerts = alerts.filter(a => !a.resolved);
+  const unreadCount = useMemo(() => activeAlerts.filter(a => !readIds.has(a.id)).length, [activeAlerts, readIds]);
   const recentAlerts = activeAlerts.slice(0, 5);
+
+  const markAllRead = useCallback(() => {
+    const newReadIds = new Set(readIds);
+    activeAlerts.forEach(a => newReadIds.add(a.id));
+    setReadIds(newReadIds);
+    localStorage.setItem('readAlertIds', JSON.stringify([...newReadIds]));
+  }, [activeAlerts, readIds]);
 
   useEffect(() => {
     const i = setInterval(() => setOnline(Math.random() > 0.05), 10000);
