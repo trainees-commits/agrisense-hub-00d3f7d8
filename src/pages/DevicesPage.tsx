@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Cpu, Droplets, Waves, Thermometer, Flame, Wind, Sun, CircleDot, Lightbulb, CloudSun, WifiOff } from "lucide-react";
 import { useSensorData } from "@/hooks/useSensorData";
 import { generateDevices, emptySensorData } from "@/lib/mockData";
+import { SensorHeartbeat } from "@/components/SensorHeartbeat";
 
 const typeIcons: Record<string, React.ElementType> = {
   Processador: Cpu,
@@ -78,10 +79,19 @@ export default function DevicesPage() {
                     <TableCell className="font-medium text-sm">{device.name}</TableCell>
                     <TableCell className="text-sm">{device.type}</TableCell>
                     <TableCell>
-                      <Badge variant={device.status === 'online' ? 'default' : 'secondary'} className="text-xs flex items-center gap-1 w-fit">
-                        <CircleDot className="w-3 h-3" />
-                        {device.status === 'online' ? 'Online' : 'Offline'}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <SensorHeartbeat
+                          status={
+                            device.status === 'offline' ? 'offline' :
+                            (device.value === 'Sem dados' || device.value === 'Sem detecção' || device.value === 0) ? 'critical' : 'online'
+                          }
+                          size="md"
+                          label={
+                            device.status === 'offline' ? 'Offline' :
+                            (device.value === 'Sem dados' || device.value === 'Sem detecção' || device.value === 0) ? 'Sem Dados' : 'Online'
+                          }
+                        />
+                      </div>
                     </TableCell>
                     <TableCell className="text-sm font-medium">
                       {device.value !== undefined ? (
