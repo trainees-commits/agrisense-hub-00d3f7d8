@@ -1,13 +1,36 @@
-import { Bell, LogOut, User, Wifi } from "lucide-react";
+import { Bell, LogOut, User, Wifi, AlertTriangle, Flame, Droplets, Thermometer, Wind } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAlerts } from "@/hooks/useAlerts";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+
+const typeIcons: Record<string, React.ElementType> = {
+  fire: Flame,
+  water: Droplets,
+  temperature: Thermometer,
+  air: Wind,
+  smoke: Wind,
+};
 
 export function DashboardHeader() {
   const [online, setOnline] = useState(true);
   const { user, signOut } = useAuth();
+  const { alerts } = useAlerts();
+  const navigate = useNavigate();
+
+  const activeAlerts = alerts.filter(a => !a.resolved);
+  const recentAlerts = activeAlerts.slice(0, 5);
 
   useEffect(() => {
     const i = setInterval(() => setOnline(Math.random() > 0.05), 10000);
@@ -29,10 +52,78 @@ export function DashboardHeader() {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="w-4 h-4" />
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center">3</span>
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="w-4 h-4" />
+              {activeAlerts.length > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center">
+                  {activeAlerts.length > 9 ? '9+' : activeAlerts.length}
+                </span>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-80">
+            <div className="px-3 py-2 flex items-center justify-between">
+              <span className="text-sm font-semibold">Notificações</span>
+              {activeAlerts.length > 0 && (
+                <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                  {activeAlerts.length} ativo{activeAlerts.length !== 1 ? 's' : ''}
+                </Badge>
+              )}
+            </div>
+            <DropdownMenuSeparator />
+            {recentAlerts.length === 0 ? (
+              <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                Nenhum alerta ativo
+              </div>
+            ) : (
+              recentAlerts.map(alert => {
+                const Icon = typeIcons[alert.type] || AlertTriangle;
+                return (
+                  <DropdownMenuItem
+                    key={alert.id}
+                    className="flex items-start gap-3 px-3 py-2.5 cursor-pointer"
+                    onClick={() => navigate('/alerts')}
+                  >
+                    <div className={`p-1.5 rounded-md mt-0.5 flex-shrink-0 ${
+                      alert.severity === 'critical' || alert.severity === 'high'
+                        ? 'bg-destructive/10 text-destructive'
+                        : 'bg-warning/10 text-warning'
+                    }`}>
+                      <Icon className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium truncate">{alert.message}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {alert.timestamp.toLocaleString('pt-BR')}
+                      </p>
+                    </div>
+                  </DropdownMenuItem>
+                );
+              })
+            )}
+            {activeAlerts.length > 5 && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-center text-xs text-primary cursor-pointer justify-center py-2"
+                  onClick={() => navigate('/alerts')}
+                >
+                  Ver mais {activeAlerts.length - 5} alerta{activeAlerts.length - 5 !== 1 ? 's' : ''}
+                </DropdownMenuItem>
+              </>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-center text-xs cursor-pointer justify-center py-2 font-medium"
+              onClick={() => navigate('/alerts')}
+            >
+              Ver todos os alertas
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <div className="flex items-center gap-2 ml-2">
           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
             <User className="w-4 h-4 text-primary" />
