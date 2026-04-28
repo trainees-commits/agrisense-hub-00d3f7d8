@@ -9,9 +9,11 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 export default function ReservoirPage() {
   const { current, getFilteredHistory, loading } = useSensorData();
   const data = current || emptySensorData;
-  const level = data.waterLevel;
-  const risk = level > 50 ? 'Baixo' : level > 25 ? 'Médio' : 'Alto';
-  const riskColor = level > 50 ? 'text-success' : level > 25 ? 'text-warning' : 'text-destructive';
+  // Boia digital: 1 = cheio, 0 = vazio
+  const isFull = data.waterLevel > 0;
+  const level = isFull ? 100 : 0;
+  const risk = isFull ? 'Baixo' : 'Crítico';
+  const riskColor = isFull ? 'text-success' : 'text-destructive';
 
   if (loading) {
     return (
@@ -25,7 +27,7 @@ export default function ReservoirPage() {
     .filter((_, i) => i % 4 === 0)
     .map(d => ({
       time: d.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      nivel: d.waterLevel,
+      nivel: d.waterLevel > 0 ? 100 : 0,
     }));
 
   const tooltipStyle = {
@@ -40,34 +42,36 @@ export default function ReservoirPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold">Monitoramento do Reservatório</h2>
-        <p className="text-sm text-muted-foreground">Nível e consumo de água</p>
+        <p className="text-sm text-muted-foreground">Estado da boia (sensor digital — Cheio / Vazio)</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="md:col-span-1">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Nível Atual</CardTitle>
+            <CardTitle className="text-sm font-medium">Estado Atual</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-center">
-              <GaugeChart value={level} max={100} label="Nível do Reservatório" unit="%" thresholds={{ good: 50, warning: 75 }} />
+              <GaugeChart value={level} max={100} label="Reservatório" unit={isFull ? 'Cheio' : 'Vazio'} thresholds={{ good: 50, warning: 75 }} />
             </div>
             <Progress value={level} className="h-4" />
             <div className="flex justify-between text-sm">
               <span>Risco:</span>
               <span className={`font-semibold ${riskColor}`}>{risk}</span>
             </div>
-            <div className="grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="p-2 rounded bg-destructive/10 text-destructive">0-25%<br/>Alto</div>
-              <div className="p-2 rounded bg-warning/10 text-warning">25-50%<br/>Médio</div>
-              <div className="p-2 rounded bg-success/10 text-success">50-100%<br/>Baixo</div>
+            <div className="grid grid-cols-2 gap-2 text-center text-xs">
+              <div className="p-2 rounded bg-destructive/10 text-destructive">Vazio<br/>Risco crítico</div>
+              <div className="p-2 rounded bg-success/10 text-success">Cheio<br/>Operacional</div>
             </div>
+            <p className="text-xs text-muted-foreground text-center">
+              Sensor de boia digital — apresenta apenas dois estados.
+            </p>
           </CardContent>
         </Card>
 
         <Card className="md:col-span-2">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Evolução do Nível (24h)</CardTitle>
+            <CardTitle className="text-sm font-medium">Histórico da Boia (24h) — Cheio (100) / Vazio (0)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-64">

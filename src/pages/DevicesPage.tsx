@@ -83,12 +83,13 @@ export default function DevicesPage() {
                         <SensorHeartbeat
                           status={
                             device.status === 'offline' ? 'offline' :
-                            (device.value === 'Sem dados' || device.value === 'Sem detecção' || device.value === 0) ? 'critical' : 'online'
+                            (device.value === 'Sem dados' || device.value === 'Vazio' || device.value === 0) ? 'critical' : 'online'
                           }
                           size="md"
                           label={
                             device.status === 'offline' ? 'Offline' :
-                            (device.value === 'Sem dados' || device.value === 'Sem detecção' || device.value === 0) ? 'Sem Dados' : 'Online'
+                            (device.value === 'Sem dados') ? 'Sem Dados' :
+                            (device.value === 'Vazio') ? 'Crítico' : 'Online'
                           }
                         />
                       </div>

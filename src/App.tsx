@@ -8,7 +8,6 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import LoginPage from "./pages/LoginPage";
 import OverviewPage from "./pages/OverviewPage";
 import MonitoringPage from "./pages/MonitoringPage";
-import IrrigationPage from "./pages/IrrigationPage";
 import AlertsPage from "./pages/AlertsPage";
 import ReservoirPage from "./pages/ReservoirPage";
 import AirQualityPage from "./pages/AirQualityPage";
@@ -40,7 +39,6 @@ function ProtectedRoutes() {
       <Routes>
         <Route path="/" element={<OverviewPage />} />
         <Route path="/monitoring" element={<MonitoringPage />} />
-        <Route path="/irrigation" element={<IrrigationPage />} />
         <Route path="/alerts" element={<AlertsPage />} />
         <Route path="/reservoir" element={<ReservoirPage />} />
         <Route path="/air-quality" element={<AirQualityPage />} />

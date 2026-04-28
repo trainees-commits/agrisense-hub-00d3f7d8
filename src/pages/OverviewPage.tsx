@@ -35,7 +35,8 @@ export default function OverviewPage() {
     .filter((_, i) => i % 3 === 0)
     .map(d => ({
       time: d.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      agua: d.waterLevel,
+      // Boia digital (0/1) — apresentamos como 100% (cheio) ou 0% (vazio) para visualização
+      agua: d.waterLevel > 0 ? 100 : 0,
     }));
 
   const tooltipStyle = {
@@ -75,8 +76,8 @@ export default function OverviewPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Umidade do Solo" value={data.soilMoisture} unit="%" icon={Droplets} status={getStatusColor(data.soilMoisture, 'moisture')} />
         <StatCard title="Temperatura" value={data.temperature} unit="°C" icon={Thermometer} status={getStatusColor(data.temperature, 'temperature')} />
-        <StatCard title="Nível de Água" value={data.waterLevel} unit="%" icon={Waves} status={getStatusColor(data.waterLevel, 'water')} />
-        <StatCard title="Qualidade do Ar" value={data.airQuality} unit="AQI" icon={Wind} status={getStatusColor(data.airQuality, 'air')} />
+        <StatCard title="Nível de Água" value={data.waterLevel > 0 ? 'Cheio' : 'Vazio'} icon={Waves} status={getStatusColor(data.waterLevel, 'water')} />
+        <StatCard title="Qualidade do Ar" value={data.airQuality} unit="%" icon={Wind} status={getStatusColor(data.airQuality, 'air')} />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Sensor de Chamas" value={data.flameDetected > 0 ? 'DETECTADO' : 'Normal'} icon={Flame} status={data.flameDetected > 0 ? 'danger' : 'good'} />
@@ -97,9 +98,9 @@ export default function OverviewPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-6">
             <GaugeChart value={data.soilMoisture} max={100} label="Umidade do Solo" unit="%" thresholds={{ good: 60, warning: 80 }} />
             <GaugeChart value={data.temperature} max={50} label="Temperatura" unit="°C" thresholds={{ good: 60, warning: 76 }} />
-            <GaugeChart value={data.waterLevel} max={100} label="Nível de Água" unit="%" thresholds={{ good: 50, warning: 75 }} />
-            <GaugeChart value={data.airQuality} max={200} label="Qualidade do Ar" unit="AQI" thresholds={{ good: 25, warning: 50 }} />
-            <GaugeChart value={data.flameDetected} max={1000} label="Sensor de Chamas" unit="IR" thresholds={{ good: 10, warning: 30 }} />
+            <GaugeChart value={data.waterLevel > 0 ? 100 : 0} max={100} label="Nível de Água" unit={data.waterLevel > 0 ? 'Cheio' : 'Vazio'} thresholds={{ good: 50, warning: 75 }} />
+            <GaugeChart value={data.airQuality} max={100} label="Qualidade do Ar" unit="%" thresholds={{ good: 60, warning: 80 }} />
+            <GaugeChart value={data.flameDetected > 0 ? 100 : 0} max={100} label="Sensor de Chamas" unit={data.flameDetected > 0 ? 'Detectado' : 'Normal'} thresholds={{ good: 50, warning: 75 }} />
             <GaugeChart value={data.smokeLevel} max={500} label="Sensor de Fumaça" unit="ppm" thresholds={{ good: 20, warning: 40 }} />
             <GaugeChart value={data.ldrValue} max={1023} label="Luminosidade (LDR)" unit="lux" thresholds={{ good: 50, warning: 75 }} />
           </div>
@@ -135,7 +136,7 @@ export default function OverviewPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Nível de Água (12h)</CardTitle>
+            <CardTitle className="text-sm font-medium">Nível de Água — Boia (12h)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-56">
@@ -146,7 +147,7 @@ export default function OverviewPage() {
                     <XAxis dataKey="time" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                     <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" domain={[0, 100]} />
                     <Tooltip contentStyle={tooltipStyle} />
-                    <Bar dataKey="agua" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name="Nível %" maxBarSize={32} />
+                    <Bar dataKey="agua" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name="Cheio (100) / Vazio (0)" maxBarSize={32} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (

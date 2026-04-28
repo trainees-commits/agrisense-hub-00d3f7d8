@@ -67,13 +67,13 @@ export function generateDevices(sensorData: SensorData, isConnected: boolean, la
     },
     {
       id: 'SNS-NIV-001',
-      name: 'Sensor de Nível de Água',
-      status: isConnected && sensorData.waterLevel > 0 ? 'online' : 'offline',
+      name: 'Boia de Nível de Água',
+      status: isConnected ? 'online' : 'offline',
       lastCommunication: lastComm,
       location: 'Reservatório Principal',
       type: 'Nível',
-      value: isConnected ? sensorData.waterLevel : 'Sem dados',
-      unit: isConnected && sensorData.waterLevel > 0 ? '%' : undefined,
+      value: isConnected ? (sensorData.waterLevel > 0 ? 'Cheio' : 'Vazio') : 'Sem dados',
+      unit: undefined,
     },
     {
       id: 'SNS-TMP-001',
@@ -88,12 +88,12 @@ export function generateDevices(sensorData: SensorData, isConnected: boolean, la
     {
       id: 'SNS-FLM-001',
       name: 'Sensor de Chamas',
-      status: isConnected ? (sensorData.flameDetected > 0 ? 'online' : 'offline') : 'offline',
+      status: isConnected ? 'online' : 'offline',
       lastCommunication: lastComm,
       location: 'Setor C - Perímetro',
       type: 'Segurança',
-      value: isConnected && sensorData.flameDetected > 0 ? `${sensorData.flameDetected}` : 'Sem detecção',
-      unit: sensorData.flameDetected > 0 ? 'IR' : undefined,
+      value: isConnected ? (sensorData.flameDetected > 0 ? 'Detectado' : 'Sem detecção') : 'Sem dados',
+      unit: undefined,
     },
     {
       id: 'SNS-SMK-001',
@@ -104,6 +104,16 @@ export function generateDevices(sensorData: SensorData, isConnected: boolean, la
       type: 'Segurança',
       value: isConnected && sensorData.smokeLevel > 0 ? `${sensorData.smokeLevel}` : 'Sem detecção',
       unit: sensorData.smokeLevel > 0 ? 'ppm' : undefined,
+    },
+    {
+      id: 'SNS-AIR-001',
+      name: 'Sensor de Qualidade do Ar',
+      status: isConnected ? 'online' : 'offline',
+      lastCommunication: lastComm,
+      location: 'Setor B - Estufa',
+      type: 'Qualidade do Ar',
+      value: isConnected ? sensorData.airQuality : 'Sem dados',
+      unit: isConnected ? '%' : undefined,
     },
     {
       id: 'SNS-LDR-001',
@@ -125,15 +135,17 @@ export function getStatusColor(value: number, type: 'moisture' | 'temperature' |
     case 'temperature':
       return value < 30 ? 'good' : value < 38 ? 'warning' : 'danger';
     case 'water':
-      return value > 50 ? 'good' : value > 25 ? 'warning' : 'danger';
+      // Digital float sensor: 1 = full (good), 0 = empty (danger)
+      return value > 0 ? 'good' : 'danger';
     case 'air':
-      return value < 50 ? 'good' : value < 100 ? 'warning' : 'danger';
+      // Air quality as percentage (0-100)
+      return value < 40 ? 'good' : value < 70 ? 'warning' : 'danger';
   }
 }
 
 export function getAirQualityLabel(value: number): string {
-  if (value < 50) return 'Normal';
-  if (value < 100) return 'Atenção';
+  if (value < 40) return 'Normal';
+  if (value < 70) return 'Atenção';
   return 'Perigo';
 }
 
@@ -152,7 +164,7 @@ export function generateAlertsFromData(data: SensorData): Alert[] {
   const now = data.timestamp;
 
   if (data.flameDetected > 0) {
-    alerts.push({ id: `flame-${now.getTime()}`, type: 'fire', severity: 'critical', message: `Sensor de chamas ativado — Intensidade: ${data.flameDetected}`, timestamp: now, resolved: false });
+    alerts.push({ id: `flame-${now.getTime()}`, type: 'fire', severity: 'critical', message: 'Chamas detectadas pelo sensor', timestamp: now, resolved: false });
   }
   if (data.smokeLevel > 200) {
     alerts.push({ id: `smoke-${now.getTime()}`, type: 'smoke', severity: 'high', message: `Fumaça em nível elevado: ${data.smokeLevel} ppm`, timestamp: now, resolved: false });
@@ -163,14 +175,13 @@ export function generateAlertsFromData(data: SensorData): Alert[] {
   if (data.temperature >= 35 && data.temperature < 40) {
     alerts.push({ id: `temp-warn-${now.getTime()}`, type: 'temperature', severity: 'medium', message: `Temperatura elevada: ${data.temperature}°C`, timestamp: now, resolved: false });
   }
-  if (data.waterLevel <= 15) {
-    alerts.push({ id: `water-${now.getTime()}`, type: 'water', severity: 'critical', message: `Nível de água crítico: ${data.waterLevel}%`, timestamp: now, resolved: false });
+  if (data.waterLevel === 0) {
+    alerts.push({ id: `water-${now.getTime()}`, type: 'water', severity: 'critical', message: 'Reservatório vazio — boia indica nível crítico', timestamp: now, resolved: false });
   }
-  if (data.waterLevel > 15 && data.waterLevel <= 25) {
-    alerts.push({ id: `water-warn-${now.getTime()}`, type: 'water', severity: 'medium', message: `Nível de água baixo: ${data.waterLevel}%`, timestamp: now, resolved: false });
-  }
-  if (data.airQuality >= 100) {
-    alerts.push({ id: `air-${now.getTime()}`, type: 'air', severity: 'high', message: `Qualidade do ar perigosa: ${data.airQuality} AQI`, timestamp: now, resolved: false });
+  if (data.airQuality >= 70) {
+    alerts.push({ id: `air-${now.getTime()}`, type: 'air', severity: 'high', message: `Qualidade do ar perigosa: ${data.airQuality}%`, timestamp: now, resolved: false });
+  } else if (data.airQuality >= 40) {
+    alerts.push({ id: `air-warn-${now.getTime()}`, type: 'air', severity: 'medium', message: `Qualidade do ar em atenção: ${data.airQuality}%`, timestamp: now, resolved: false });
   }
 
   return alerts;

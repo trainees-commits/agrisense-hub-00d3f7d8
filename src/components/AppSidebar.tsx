@@ -12,7 +12,6 @@ import {
 const menuItems = [
   { title: "Visão Geral", url: "/", icon: LayoutDashboard },
   { title: "Monitoramento", url: "/monitoring", icon: Activity },
-  { title: "Irrigação", url: "/irrigation", icon: Droplets },
   { title: "Alertas", url: "/alerts", icon: Bell },
   { title: "Reservatório", url: "/reservoir", icon: Container },
   { title: "Qualidade do Ar", url: "/air-quality", icon: Wind },

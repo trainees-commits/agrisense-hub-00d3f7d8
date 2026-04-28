@@ -42,19 +42,23 @@ function getCriticalConditions(data: SensorData): CriticalCondition[] {
 
   // Flame detected
   if (data.flameDetected > 0) {
-    conditions.push({ key: 'flame', message: `ALERTA CRITICO: Chamas detectadas! Intensidade: ${data.flameDetected}`, type: 'critical' });
+    conditions.push({ key: 'flame', message: 'ALERTA CRITICO: Chamas detectadas pelo sensor!', type: 'critical' });
   }
   // Critical temperature
   if (data.temperature >= 40) {
     conditions.push({ key: 'temperature', message: `ALERTA: Temperatura critica! ${data.temperature}°C`, type: 'critical' });
   }
-  // Critical water level
-  if (data.waterLevel <= 15) {
-    conditions.push({ key: 'waterLow', message: `ALERTA: Nivel de agua critico! ${data.waterLevel}%`, type: 'critical' });
+  // Water level (digital float: 0 = empty)
+  if (data.waterLevel === 0) {
+    conditions.push({ key: 'waterLow', message: 'ALERTA: Reservatorio vazio (boia indica nivel critico)', type: 'critical' });
   }
   // Dangerous smoke
   if (data.smokeLevel > 200) {
     conditions.push({ key: 'smoke', message: `ALERTA: Fumaca em nivel perigoso! ${data.smokeLevel} ppm`, type: 'critical' });
+  }
+  // Dangerous air quality (percentage)
+  if (data.airQuality >= 70) {
+    conditions.push({ key: 'airBad', message: `ALERTA: Qualidade do ar perigosa! ${data.airQuality}%`, type: 'critical' });
   }
 
   // Sensors sending 0 (offline/disconnected)
@@ -63,9 +67,6 @@ function getCriticalConditions(data: SensorData): CriticalCondition[] {
   }
   if (data.temperature === 0) {
     conditions.push({ key: 'tempZero', message: 'Sensor de temperatura sem dados (valor 0)', type: 'warning' });
-  }
-  if (data.waterLevel === 0) {
-    conditions.push({ key: 'waterZero', message: 'Sensor de nível de água sem dados (valor 0)', type: 'warning' });
   }
 
   return conditions;
