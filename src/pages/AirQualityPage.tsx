@@ -30,8 +30,8 @@ export default function AirQualityPage() {
     }));
 
   const getBarColor = (value: number) => {
-    if (value <= 50) return 'hsl(var(--chart-1))';
-    if (value <= 100) return 'hsl(var(--chart-5))';
+    if (value < 40) return 'hsl(var(--chart-1))';
+    if (value < 70) return 'hsl(var(--chart-5))';
     return 'hsl(var(--destructive))';
   };
 
@@ -53,26 +53,26 @@ export default function AirQualityPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Índice Atual</CardTitle>
+            <CardTitle className="text-sm font-medium">Qualidade do Ar Atual</CardTitle>
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <div className="flex justify-center">
-              <GaugeChart value={aqi} max={200} label="Qualidade do Ar" unit="AQI" thresholds={{ good: 25, warning: 50 }} />
+              <GaugeChart value={aqi} max={100} label="Qualidade do Ar" unit="%" thresholds={{ good: 60, warning: 80 }} />
             </div>
             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${bgMap[status]} ${colorMap[status]} font-medium text-sm`}>
               <Wind className="w-4 h-4" /> {label}
             </div>
             <div className="grid grid-cols-3 gap-2 text-xs text-center">
-              <div className="p-2 rounded bg-success/10 text-success">0-50<br/>Normal</div>
-              <div className="p-2 rounded bg-warning/10 text-warning">50-100<br/>Atenção</div>
-              <div className="p-2 rounded bg-destructive/10 text-destructive">100+<br/>Perigo</div>
+              <div className="p-2 rounded bg-success/10 text-success">0-40%<br/>Normal</div>
+              <div className="p-2 rounded bg-warning/10 text-warning">40-70%<br/>Atenção</div>
+              <div className="p-2 rounded bg-destructive/10 text-destructive">70-100%<br/>Perigo</div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="md:col-span-2">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Histórico AQI (12h)</CardTitle>
+            <CardTitle className="text-sm font-medium">Histórico Qualidade do Ar (12h)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-64">
@@ -81,9 +81,9 @@ export default function AirQualityPage() {
                   <BarChart data={histData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="time" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                    <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" domain={[0, 100]} />
                     <Tooltip contentStyle={tooltipStyle} />
-                    <Bar dataKey="aqi" radius={[4, 4, 0, 0]} name="AQI" maxBarSize={28}>
+                    <Bar dataKey="aqi" radius={[4, 4, 0, 0]} name="Qualidade do Ar (%)" maxBarSize={28}>
                       {histData.map((entry, index) => (
                         <Cell key={index} fill={getBarColor(entry.aqi)} />
                       ))}
