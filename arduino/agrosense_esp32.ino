@@ -7,7 +7,7 @@
  *
  * Sensores utilizados:
  *   - Humidade do solo (analogico)        -> GPIO 34
- *   - Temperatura DS18B20 (1-wire)        -> GPIO 4
+ *   - Temperatura DHT11 (1-wire digital)  -> GPIO 4
  *   - Boia de nivel de agua (digital)     -> GPIO 18  (0 = vazio, 1 = cheio)
  *   - Sensor de chamas (digital)          -> GPIO 19  (0 = chamas, 1 = normal -> invertido)
  *   - MQ-135 Qualidade do ar (analogico)  -> GPIO 35  (0-100%)
@@ -16,8 +16,14 @@
  * Atuadores:
  *   - Rele bomba de irrigacao             -> GPIO 26  (LOW = ligado, HIGH = desligado)
  *
- * NOTA: o sensor de fumaça foi removido. A medição de qualidade do
+ * NOTA 1: o sensor de fumaça foi removido. A medição de qualidade do
  * ar (MQ-135) cobre tanto poluentes como fumaça num único valor 0-100%.
+ *
+ * NOTA 2: a temperatura é lida do sensor DHT11 utilizando a biblioteca
+ * padrão "DHT sensor library" da Adafruit (Sketch -> Include Library ->
+ * Manage Libraries -> "DHT sensor library by Adafruit" + dependência
+ * "Adafruit Unified Sensor"). O DHT11 fornece temperatura inteira
+ * em °C (0-50 °C, ±2 °C) e humidade do ar (não usada aqui).
  *
  * IMPORTANTE - VALIDACAO DUPLA com a aplicacao web:
  *   Os mesmos thresholds sao aplicados localmente no ESP32 e
@@ -37,8 +43,7 @@
 
 #include <WiFi.h>
 #include <HTTPClient.h>
-#include <OneWire.h>
-#include <DallasTemperature.h>
+#include <DHT.h>
 
 // ===================== CONFIG WIFI =====================
 const char* WIFI_SSID     = "SUA_REDE_WIFI";
@@ -57,12 +62,16 @@ const char* DEVICE_ID = "ESP32-001";
 
 // ===================== PINOS ===========================
 #define PIN_SOIL        34   // analogico
-#define PIN_DS18B20      4   // 1-wire (temperatura)
+#define PIN_DHT          4   // DHT11 (temperatura)
 #define PIN_WATER       18   // digital boia (0=vazio, 1=cheio)
 #define PIN_FLAME       19   // digital (modulo KY-026: 0 = chamas)
 #define PIN_AIR_QUALITY 35   // analogico MQ-135
 #define PIN_LDR         32   // analogico
 #define PIN_RELAY_PUMP  26   // saida rele bomba (LOW=ligado)
+
+// Tipo do sensor DHT utilizado (DHT11). Para trocar por DHT22/AM2302
+// basta alterar para DHT22 — a biblioteca é a mesma.
+#define DHT_TYPE        DHT11
 
 // ===================== THRESHOLDS (sincronizados com web) ====
 const float SOIL_PUMP_ON_BELOW = 28.0;   // liga abaixo de 28%
@@ -73,8 +82,7 @@ const unsigned long SEND_INTERVAL_MS = 60000UL;  // 60 s
 const unsigned long RETRY_DELAY_MS   = 10000UL;  // 10 s em caso de falha
 
 // ===================== ESTADO ==========================
-OneWire oneWire(PIN_DS18B20);
-DallasTemperature dsSensors(&oneWire);
+DHT dht(PIN_DHT, DHT_TYPE);
 
 unsigned long lastSendAttempt = 0;
 bool          pumpOn = false;
@@ -90,7 +98,7 @@ void setup() {
   digitalWrite(PIN_RELAY_PUMP, HIGH);   // bomba desligada por defeito
 
   analogReadResolution(10);             // ADC 0-1023
-  dsSensors.begin();
+  dht.begin();   // inicializa o DHT11
 
   connectWifi();
   // Forca primeiro envio imediato
@@ -144,9 +152,12 @@ float readSoilMoisture() {
 }
 
 float readTemperature() {
-  dsSensors.requestTemperatures();
-  float t = dsSensors.getTempCByIndex(0);
-  if (t == DEVICE_DISCONNECTED_C) return 0.0;
+  // DHT11: leitura demora ~250 ms; devolve NaN em caso de falha
+  float t = dht.readTemperature();   // °C
+  if (isnan(t)) {
+    Serial.println("[DHT11] Falha na leitura — a devolver 0.0");
+    return 0.0;
+  }
   return t;
 }
 
