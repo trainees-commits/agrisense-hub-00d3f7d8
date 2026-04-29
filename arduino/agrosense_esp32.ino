@@ -16,6 +16,9 @@
  * Atuadores:
  *   - Rele bomba de irrigacao             -> GPIO 26  (LOW = ligado, HIGH = desligado)
  *
+ * NOTA: o sensor de fumaça foi removido. A medição de qualidade do
+ * ar (MQ-135) cobre tanto poluentes como fumaça num único valor 0-100%.
+ *
  * IMPORTANTE - VALIDACAO DUPLA com a aplicacao web:
  *   Os mesmos thresholds sao aplicados localmente no ESP32 e
  *   replicados no backend (trigger generate_alerts_from_reading)
@@ -216,8 +219,6 @@ bool sendReading(float soil, float temperature, int waterLevel,
   http.addHeader("Authorization", String("Bearer ") + SUPABASE_ANON_KEY);
   http.addHeader("Prefer",        "return=minimal");
 
-  // Nota: smoke_level removido (sensor unificado em air_quality).
-  // Enviamos 0 para manter compatibilidade com a coluna existente.
   String payload = "{";
   payload += "\"device_id\":\"" + String(DEVICE_ID) + "\",";
   payload += "\"soil_moisture\":" + String(soil, 1) + ",";
@@ -225,7 +226,6 @@ bool sendReading(float soil, float temperature, int waterLevel,
   payload += "\"water_level\":"   + String(waterLevel) + ",";
   payload += "\"air_quality\":"   + String(airQuality) + ",";
   payload += "\"flame_detected\":" + String(flame) + ",";
-  payload += "\"smoke_level\":0,";
   payload += "\"ldr_value\":"     + String(ldr);
   payload += "}";
 
