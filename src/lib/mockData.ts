@@ -131,7 +131,9 @@ export function generateDevices(sensorData: SensorData, isConnected: boolean, la
 export function getStatusColor(value: number, type: 'moisture' | 'temperature' | 'water' | 'air'): 'good' | 'warning' | 'danger' {
   switch (type) {
     case 'moisture':
-      return value > 60 ? 'good' : value > 35 ? 'warning' : 'danger';
+      // Sincronizado com Arduino: bomba liga abaixo de 28% (danger),
+      // zona de atencao 28-40%, normal acima de 40%.
+      return value > 40 ? 'good' : value >= 28 ? 'warning' : 'danger';
     case 'temperature':
       return value < 30 ? 'good' : value < 38 ? 'warning' : 'danger';
     case 'water':
