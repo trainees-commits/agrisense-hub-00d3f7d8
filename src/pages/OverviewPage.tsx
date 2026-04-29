@@ -4,7 +4,7 @@ import { GaugeChart } from "@/components/GaugeChart";
 import { useSensorData } from "@/hooks/useSensorData";
 import { useAlertSound } from "@/hooks/useAlertSound";
 import { useAlerts } from "@/hooks/useAlerts";
-import { getStatusColor, emptySensorData } from "@/lib/mockData";
+import { getStatusColor, emptySensorData, scaleAirQuality, isReservoirFull } from "@/lib/mockData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Badge } from "@/components/ui/badge";
@@ -35,8 +35,8 @@ export default function OverviewPage() {
     .filter((_, i) => i % 3 === 0)
     .map(d => ({
       time: d.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      // Boia digital (0/1) — apresentamos como 100% (cheio) ou 0% (vazio) para visualização
-      agua: d.waterLevel > 0 ? 100 : 0,
+      // Boia invertida no hardware — apresentamos como 100% (cheio) ou 0% (vazio) para visualização
+      agua: isReservoirFull(d.waterLevel) ? 100 : 0,
     }));
 
   const tooltipStyle = {
@@ -76,8 +76,8 @@ export default function OverviewPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Umidade do Solo" value={data.soilMoisture} unit="%" icon={Droplets} status={getStatusColor(data.soilMoisture, 'moisture')} />
         <StatCard title="Temperatura" value={data.temperature} unit="°C" icon={Thermometer} status={getStatusColor(data.temperature, 'temperature')} />
-        <StatCard title="Nível de Água" value={data.waterLevel > 0 ? 'Cheio' : 'Vazio'} icon={Waves} status={getStatusColor(data.waterLevel, 'water')} />
-        <StatCard title="Qualidade do Ar" value={data.airQuality} unit="%" icon={Wind} status={getStatusColor(data.airQuality, 'air')} />
+        <StatCard title="Nível de Água" value={isReservoirFull(data.waterLevel) ? 'Cheio' : 'Vazio'} icon={Waves} status={getStatusColor(data.waterLevel, 'water')} />
+        <StatCard title="Qualidade do Ar" value={scaleAirQuality(data.airQuality)} unit="%" icon={Wind} status={getStatusColor(scaleAirQuality(data.airQuality), 'air')} />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Sensor de Chamas" value={data.flameDetected > 0 ? 'DETECTADO' : 'Normal'} icon={Flame} status={data.flameDetected > 0 ? 'danger' : 'good'} />
@@ -98,10 +98,9 @@ export default function OverviewPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-6">
             <GaugeChart value={data.soilMoisture} max={100} label="Umidade do Solo" unit="%" thresholds={{ good: 60, warning: 80 }} />
             <GaugeChart value={data.temperature} max={50} label="Temperatura" unit="°C" thresholds={{ good: 60, warning: 76 }} />
-            <GaugeChart value={data.waterLevel > 0 ? 100 : 0} max={100} label="Nível de Água" unit={data.waterLevel > 0 ? 'Cheio' : 'Vazio'} thresholds={{ good: 50, warning: 75 }} />
-            <GaugeChart value={data.airQuality} max={100} label="Qualidade do Ar" unit="%" thresholds={{ good: 60, warning: 80 }} />
+            <GaugeChart value={isReservoirFull(data.waterLevel) ? 100 : 0} max={100} label="Nível de Água" unit={isReservoirFull(data.waterLevel) ? 'Cheio' : 'Vazio'} thresholds={{ good: 50, warning: 75 }} />
+            <GaugeChart value={scaleAirQuality(data.airQuality)} max={100} label="Qualidade do Ar" unit="%" thresholds={{ good: 60, warning: 80 }} />
             <GaugeChart value={data.flameDetected > 0 ? 100 : 0} max={100} label="Sensor de Chamas" unit={data.flameDetected > 0 ? 'Detectado' : 'Normal'} thresholds={{ good: 50, warning: 75 }} />
-            <GaugeChart value={data.smokeLevel} max={500} label="Sensor de Fumaça" unit="ppm" thresholds={{ good: 20, warning: 40 }} />
             <GaugeChart value={data.ldrValue} max={1023} label="Luminosidade (LDR)" unit="lux" thresholds={{ good: 50, warning: 75 }} />
           </div>
         </CardContent>

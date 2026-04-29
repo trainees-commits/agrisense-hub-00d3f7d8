@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import { useSensorData } from "@/hooks/useSensorData";
+import { scaleAirQuality, isReservoirFull } from "@/lib/mockData";
 import { useState } from "react";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
@@ -31,13 +32,13 @@ export default function HistoryPage() {
       umidade: d.soilMoisture,
       temperatura: d.temperature,
       agua: d.waterLevel,
-      ar: d.airQuality,
+      ar: scaleAirQuality(d.airQuality),
     }));
 
   const exportCSV = () => {
-    const header = 'Data/Hora,Umidade Solo (%),Temperatura (°C),Nível Água (%),Qualidade Ar (AQI),Chama (IR),Fumaça (ppm),LDR (lux)\n';
+    const header = 'Data/Hora,Umidade Solo (%),Temperatura (°C),Nível Água,Qualidade Ar (%),Chama (IR),LDR (lux)\n';
     const rows = filtered.map(d =>
-      `${d.timestamp.toLocaleString('pt-BR')},${d.soilMoisture},${d.temperature},${d.waterLevel},${d.airQuality},${d.flameDetected},${d.smokeLevel},${d.ldrValue}`
+      `${d.timestamp.toLocaleString('pt-BR')},${d.soilMoisture},${d.temperature},${isReservoirFull(d.waterLevel) ? 'Cheio' : 'Vazio'},${scaleAirQuality(d.airQuality)},${d.flameDetected},${d.ldrValue}`
     ).join('\n');
     const blob = new Blob([header + rows], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -66,20 +67,18 @@ export default function HistoryPage() {
         'Data/Hora',
         'Umidade (%)',
         'Temp (C)',
-        'Agua (%)',
-        'Ar (AQI)',
+        'Agua',
+        'Ar (%)',
         'Chama',
-        'Fumaca',
         'LDR',
       ]],
       body: filtered.map(d => [
         d.timestamp.toLocaleString('pt-BR'),
         `${d.soilMoisture}`,
         `${d.temperature}`,
-        `${d.waterLevel}`,
-        `${d.airQuality}`,
+        isReservoirFull(d.waterLevel) ? 'Cheio' : 'Vazio',
+        `${scaleAirQuality(d.airQuality)}`,
         `${d.flameDetected}`,
-        `${d.smokeLevel}`,
         `${d.ldrValue}`,
       ]),
       styles: {
@@ -173,10 +172,9 @@ export default function HistoryPage() {
                       <TableHead>Data/Hora</TableHead>
                       <TableHead>Umidade (%)</TableHead>
                       <TableHead>Temp (°C)</TableHead>
-                      <TableHead>Água (%)</TableHead>
-                      <TableHead>Ar (AQI)</TableHead>
+                      <TableHead>Água</TableHead>
+                      <TableHead>Ar (%)</TableHead>
                       <TableHead>Chama</TableHead>
-                      <TableHead>Fumaça</TableHead>
                       <TableHead>LDR</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -186,10 +184,9 @@ export default function HistoryPage() {
                         <TableCell className="text-xs">{d.timestamp.toLocaleString('pt-BR')}</TableCell>
                         <TableCell>{d.soilMoisture}</TableCell>
                         <TableCell>{d.temperature}</TableCell>
-                        <TableCell>{d.waterLevel}</TableCell>
-                        <TableCell>{d.airQuality}</TableCell>
+                        <TableCell>{isReservoirFull(d.waterLevel) ? 'Cheio' : 'Vazio'}</TableCell>
+                        <TableCell>{scaleAirQuality(d.airQuality)}</TableCell>
                         <TableCell>{d.flameDetected}</TableCell>
-                        <TableCell>{d.smokeLevel}</TableCell>
                         <TableCell>{d.ldrValue}</TableCell>
                       </TableRow>
                     ))}
