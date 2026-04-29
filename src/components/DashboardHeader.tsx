@@ -20,7 +20,6 @@ const typeIcons: Record<string, React.ElementType> = {
   water: Droplets,
   temperature: Thermometer,
   air: Wind,
-  smoke: Wind,
 };
 
 export function DashboardHeader() {

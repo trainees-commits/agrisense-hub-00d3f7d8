@@ -6,7 +6,7 @@ import { useAlerts } from "@/hooks/useAlerts";
 import { useState } from "react";
 import { toast } from "sonner";
 
-const typeIcons: Record<string, typeof Flame> = { fire: Flame, water: Droplets, temperature: Thermometer, air: Wind, smoke: Wind };
+const typeIcons: Record<string, typeof Flame> = { fire: Flame, water: Droplets, temperature: Thermometer, air: Wind };
 const severityLabels: Record<string, string> = { critical: 'Crítico', high: 'Alto', medium: 'Médio', low: 'Baixo' };
 
 export default function AlertsPage() {

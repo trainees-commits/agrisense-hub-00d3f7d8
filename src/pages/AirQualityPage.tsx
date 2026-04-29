@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSensorData } from "@/hooks/useSensorData";
-import { getAirQualityLabel, getStatusColor, emptySensorData } from "@/lib/mockData";
+import { getAirQualityLabel, getStatusColor, emptySensorData, scaleAirQuality } from "@/lib/mockData";
 import { GaugeChart } from "@/components/GaugeChart";
 import { Wind, Loader2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
@@ -8,7 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 export default function AirQualityPage() {
   const { current, getFilteredHistory, loading } = useSensorData();
   const data = current || emptySensorData;
-  const aqi = data.airQuality;
+  const aqi = scaleAirQuality(data.airQuality);
   const label = getAirQualityLabel(aqi);
   const status = getStatusColor(aqi, 'air');
   const colorMap = { good: 'text-success', warning: 'text-warning', danger: 'text-destructive' };
@@ -26,7 +26,7 @@ export default function AirQualityPage() {
     .filter((_, i) => i % 3 === 0)
     .map(d => ({
       time: d.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      aqi: d.airQuality,
+      aqi: scaleAirQuality(d.airQuality),
     }));
 
   const getBarColor = (value: number) => {

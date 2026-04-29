@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSensorData } from "@/hooks/useSensorData";
-import { emptySensorData } from "@/lib/mockData";
+import { emptySensorData, isReservoirFull } from "@/lib/mockData";
 import { GaugeChart } from "@/components/GaugeChart";
 import { Progress } from "@/components/ui/progress";
 import { Loader2 } from "lucide-react";
@@ -9,8 +9,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 export default function ReservoirPage() {
   const { current, getFilteredHistory, loading } = useSensorData();
   const data = current || emptySensorData;
-  // Boia digital: 1 = cheio, 0 = vazio
-  const isFull = data.waterLevel > 0;
+  // Boia digital invertida no hardware: 0 = cheio, 1 = vazio
+  const isFull = isReservoirFull(data.waterLevel);
   const level = isFull ? 100 : 0;
   const risk = isFull ? 'Baixo' : 'Crítico';
   const riskColor = isFull ? 'text-success' : 'text-destructive';
@@ -27,7 +27,7 @@ export default function ReservoirPage() {
     .filter((_, i) => i % 4 === 0)
     .map(d => ({
       time: d.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      nivel: d.waterLevel > 0 ? 100 : 0,
+      nivel: isReservoirFull(d.waterLevel) ? 100 : 0,
     }));
 
   const tooltipStyle = {
