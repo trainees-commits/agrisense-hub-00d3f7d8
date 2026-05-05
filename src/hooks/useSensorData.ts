@@ -65,7 +65,7 @@ export function useSensorData() {
   useEffect(() => {
     const interval = window.setInterval(() => {
       fetchData(true);
-    }, 15000);
+    }, 5000);
 
     return () => {
       window.clearInterval(interval);
@@ -107,7 +107,7 @@ export function useSensorData() {
   // Connection status: consider online if last reading < 2 minutes ago
   const isConnected = useMemo(() => {
     if (!lastReceived) return false;
-    return Date.now() - lastReceived.getTime() < 120000;
+    return Date.now() - lastReceived.getTime() < 30000;
   }, [lastReceived]);
 
   return { current, history, getFilteredHistory, loading, isConnected, lastReceived };
