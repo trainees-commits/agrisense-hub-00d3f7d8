@@ -6,12 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Leaf, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Código de acesso necessário para criar uma nova conta.
+// Corresponde ao identificador do dispositivo ESP32 vinculado ao sistema.
+const REGISTRATION_ACCESS_CODE = 'ESP32-001';
+
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [accessCode, setAccessCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -32,6 +37,10 @@ export default function LoginPage() {
       }
       if (password !== confirmPassword) {
         toast.error('As palavras-passe não coincidem');
+        return;
+      }
+      if (accessCode.trim() !== REGISTRATION_ACCESS_CODE) {
+        toast.error('Código de acesso inválido. Registo não autorizado.');
         return;
       }
     }
@@ -142,6 +151,22 @@ export default function LoginPage() {
                   </div>
                 </div>
               )}
+              {isSignUp && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Código de Acesso</label>
+                  <Input
+                    type="text"
+                    placeholder="ID do dispositivo associado"
+                    value={accessCode}
+                    onChange={e => setAccessCode(e.target.value)}
+                    required
+                    autoComplete="off"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Apenas utilizadores com o ID do dispositivo autorizado podem criar conta.
+                  </p>
+                </div>
+              )}
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                 {isSignUp ? 'Criar Conta' : 'Entrar'}
@@ -150,7 +175,7 @@ export default function LoginPage() {
             <div className="mt-4 text-center">
               <button
                 type="button"
-                onClick={() => { setIsSignUp(!isSignUp); setConfirmPassword(''); setFullName(''); }}
+                onClick={() => { setIsSignUp(!isSignUp); setConfirmPassword(''); setFullName(''); setAccessCode(''); }}
                 className="text-sm text-primary hover:underline"
               >
                 {isSignUp ? 'Já tem conta? Faça login' : 'Não tem conta? Criar agora'}
