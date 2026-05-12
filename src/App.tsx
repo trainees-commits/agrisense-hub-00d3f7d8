@@ -14,6 +14,7 @@ import AirQualityPage from "./pages/AirQualityPage";
 import DevicesPage from "./pages/DevicesPage";
 import HistoryPage from "./pages/HistoryPage";
 import SettingsPage from "./pages/SettingsPage";
+import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -45,6 +46,7 @@ function ProtectedRoutes() {
         <Route path="/devices" element={<DevicesPage />} />
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </DashboardLayout>
