@@ -137,15 +137,19 @@ export function DashboardHeader() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <div className="flex items-center gap-2 ml-2">
+        <button
+          onClick={() => navigate('/profile')}
+          className="flex items-center gap-2 ml-2 hover:bg-accent rounded-md p-1 transition-colors"
+          title="Ver perfil"
+        >
           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
             <User className="w-4 h-4 text-primary" />
           </div>
-          <div className="hidden md:block">
+          <div className="hidden md:block text-left">
             <p className="text-xs font-medium truncate max-w-[120px]">{user?.email || 'Admin'}</p>
             <p className="text-[10px] text-muted-foreground">Administrador</p>
           </div>
-        </div>
+        </button>
         <Button variant="ghost" size="icon" onClick={handleLogout} title="Sair">
           <LogOut className="w-4 h-4" />
         </Button>

@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Activity, Droplets, Bell, Database as DbIcon,
-  Settings, Radio, Wind, Container
+  Settings, Radio, Wind, Container, UserCircle
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -17,6 +17,7 @@ const menuItems = [
   { title: "Qualidade do Ar", url: "/air-quality", icon: Wind },
   { title: "Dispositivos", url: "/devices", icon: Radio },
   { title: "Histórico", url: "/history", icon: DbIcon },
+  { title: "Perfil", url: "/profile", icon: UserCircle },
   { title: "Configurações", url: "/settings", icon: Settings },
 ];
 
