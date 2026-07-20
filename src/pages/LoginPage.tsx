@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [fullNameError, setFullNameError] = useState('');
   const [accessCode, setAccessCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -33,6 +34,11 @@ export default function LoginPage() {
     if (isSignUp) {
       if (!fullName.trim()) {
         toast.error('Informe o seu nome');
+        return;
+      }
+      if (/\d/.test(fullName)) {
+        toast.error('O nome não pode conter números');
+        setFullNameError('O nome não pode conter números');
         return;
       }
       if (password !== confirmPassword) {
@@ -100,10 +106,23 @@ export default function LoginPage() {
                     type="text"
                     placeholder="Seu nome completo"
                     value={fullName}
-                    onChange={e => setFullName(e.target.value)}
+                    onChange={e => {
+                      const value = e.target.value;
+                      setFullName(value);
+                      if (/\d/.test(value)) {
+                        setFullNameError('O nome não pode conter números');
+                      } else {
+                        setFullNameError('');
+                      }
+                    }}
                     required
                     autoComplete="name"
+                    aria-invalid={fullNameError ? 'true' : 'false'}
+                    className={fullNameError ? 'border-destructive focus-visible:ring-destructive' : ''}
                   />
+                  {fullNameError && (
+                    <p className="text-xs text-destructive" role="alert">{fullNameError}</p>
+                  )}
                 </div>
               )}
               <div className="space-y-2">
