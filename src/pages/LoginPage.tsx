@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,9 +36,8 @@ export default function LoginPage() {
         toast.error('Informe o seu nome');
         return;
       }
-      if (/\d/.test(fullName)) {
-        toast.error('O nome não pode conter números');
-        setFullNameError('O nome não pode conter números');
+      if (fullNameError) {
+        toast.error(fullNameError);
         return;
       }
       if (password !== confirmPassword) {
@@ -109,8 +108,8 @@ export default function LoginPage() {
                     onChange={e => {
                       const value = e.target.value;
                       setFullName(value);
-                      if (/\d/.test(value)) {
-                        setFullNameError('O nome não pode conter números');
+                      if (/[^a-zA-ZÀ-ÿ\s]/.test(value)) {
+                        setFullNameError('O nome só pode conter letras e espaços');
                       } else {
                         setFullNameError('');
                       }
