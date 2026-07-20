@@ -26,7 +26,7 @@ export default function OverviewPage() {
   }
 
   const lineData = getFilteredHistory(6).map(d => ({
-    time: d.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    time: d.timestamp.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
     umidade: d.soilMoisture,
     temperatura: d.temperature,
   }));
@@ -34,7 +34,7 @@ export default function OverviewPage() {
   const barData = getFilteredHistory(12)
     .filter((_, i) => i % 3 === 0)
     .map(d => ({
-      time: d.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      time: d.timestamp.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
       // Boia invertida no hardware — apresentamos como 100% (cheio) ou 0% (vazio) para visualização
       agua: isReservoirFull(d.waterLevel) ? 100 : 0,
     }));
@@ -172,7 +172,7 @@ export default function OverviewPage() {
                 <AlertTriangle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${alert.severity === 'critical' ? 'text-destructive' : alert.severity === 'high' ? 'text-destructive' : 'text-warning'}`} />
                 <div className="min-w-0">
                   <p className="text-xs font-medium truncate">{alert.message}</p>
-                  <p className="text-[10px] text-muted-foreground">{alert.timestamp.toLocaleString('pt-BR')}</p>
+                  <p className="text-[10px] text-muted-foreground">{alert.timestamp.toLocaleString('pt-PT')}</p>
                 </div>
               </div>
             ))}

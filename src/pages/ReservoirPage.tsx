@@ -26,7 +26,7 @@ export default function ReservoirPage() {
   const histData = getFilteredHistory(24)
     .filter((_, i) => i % 4 === 0)
     .map(d => ({
-      time: d.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      time: d.timestamp.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
       nivel: isReservoirFull(d.waterLevel) ? 100 : 0,
     }));
 

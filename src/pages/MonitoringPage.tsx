@@ -38,18 +38,18 @@ export default function MonitoringPage() {
   const sampled = rawData.filter((_, i) => i % step === 0);
 
   const lineData = sampled.map(d => ({
-    time: d.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    time: d.timestamp.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
     umidade: d.soilMoisture,
     temperatura: d.temperature,
   }));
 
   const barDataWater = sampled.map(d => ({
-    time: d.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    time: d.timestamp.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
     agua: isReservoirFull(d.waterLevel) ? 100 : 0,
   }));
 
   const barDataAir = sampled.map(d => ({
-    time: d.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    time: d.timestamp.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
     ar: scaleAirQuality(d.airQuality),
   }));
 

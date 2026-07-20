@@ -38,7 +38,7 @@ export default function DevicesPage() {
             <p className="font-semibold text-sm">ESP32 - Processador Principal</p>
             <p className="text-xs text-muted-foreground">
               {isConnected 
-                ? `Nó central de aquisição de dados — Última leitura: ${lastReceived?.toLocaleString('pt-BR') || 'N/A'}`
+                ? `Nó central de aquisição de dados — Última leitura: ${lastReceived?.toLocaleString('pt-PT') || 'N/A'}`
                 : 'Sem comunicação — Verifique a conexão do ESP32'
               }
             </p>
@@ -102,7 +102,7 @@ export default function DevicesPage() {
                         </span>
                       ) : '—'}
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{device.lastCommunication.toLocaleString('pt-BR')}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{device.lastCommunication.toLocaleString('pt-PT')}</TableCell>
                     <TableCell className="text-sm">{device.location}</TableCell>
                   </TableRow>
                 );
