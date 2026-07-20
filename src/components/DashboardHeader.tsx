@@ -109,7 +109,7 @@ export function DashboardHeader() {
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-medium truncate">{alert.message}</p>
                       <p className="text-[10px] text-muted-foreground">
-                        {alert.timestamp.toLocaleString('pt-BR')}
+                        {alert.timestamp.toLocaleString('pt-PT')}
                       </p>
                     </div>
                   </DropdownMenuItem>

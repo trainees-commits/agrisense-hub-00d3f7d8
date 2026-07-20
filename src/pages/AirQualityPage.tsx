@@ -25,7 +25,7 @@ export default function AirQualityPage() {
   const histData = getFilteredHistory(12)
     .filter((_, i) => i % 3 === 0)
     .map(d => ({
-      time: d.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      time: d.timestamp.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
       aqi: scaleAirQuality(d.airQuality),
     }));
 

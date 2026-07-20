@@ -28,7 +28,7 @@ export default function HistoryPage() {
   const chartData = filtered
     .filter((_, i) => i % Math.max(1, Math.floor(filtered.length / 20)) === 0)
     .map(d => ({
-      time: d.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      time: d.timestamp.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
       umidade: d.soilMoisture,
       temperatura: d.temperature,
       agua: d.waterLevel,
@@ -38,7 +38,7 @@ export default function HistoryPage() {
   const exportCSV = () => {
     const header = 'Data/Hora,Umidade Solo (%),Temperatura (°C),Nível Água,Qualidade Ar (%),Chama (IR),LDR (lux)\n';
     const rows = filtered.map(d =>
-      `${d.timestamp.toLocaleString('pt-BR')},${d.soilMoisture},${d.temperature},${isReservoirFull(d.waterLevel) ? 'Cheio' : 'Vazio'},${scaleAirQuality(d.airQuality)},${d.flameDetected},${d.ldrValue}`
+      `${d.timestamp.toLocaleString('pt-PT')},${d.soilMoisture},${d.temperature},${isReservoirFull(d.waterLevel) ? 'Cheio' : 'Vazio'},${scaleAirQuality(d.airQuality)},${d.flameDetected},${d.ldrValue}`
     ).join('\n');
     const blob = new Blob([header + rows], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -52,7 +52,7 @@ export default function HistoryPage() {
 
   const exportPDF = () => {
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-    const generatedAt = new Date().toLocaleString('pt-BR');
+    const generatedAt = new Date().toLocaleString('pt-PT');
 
     doc.setFontSize(16);
     doc.text('Historico de Leituras dos Sensores', 14, 16);
@@ -73,7 +73,7 @@ export default function HistoryPage() {
         'LDR',
       ]],
       body: filtered.map(d => [
-        d.timestamp.toLocaleString('pt-BR'),
+        d.timestamp.toLocaleString('pt-PT'),
         `${d.soilMoisture}`,
         `${d.temperature}`,
         isReservoirFull(d.waterLevel) ? 'Cheio' : 'Vazio',
@@ -181,7 +181,7 @@ export default function HistoryPage() {
                   <TableBody>
                     {displayed.map((d, i) => (
                       <TableRow key={i}>
-                        <TableCell className="text-xs">{d.timestamp.toLocaleString('pt-BR')}</TableCell>
+                        <TableCell className="text-xs">{d.timestamp.toLocaleString('pt-PT')}</TableCell>
                         <TableCell>{d.soilMoisture}</TableCell>
                         <TableCell>{d.temperature}</TableCell>
                         <TableCell>{isReservoirFull(d.waterLevel) ? 'Cheio' : 'Vazio'}</TableCell>

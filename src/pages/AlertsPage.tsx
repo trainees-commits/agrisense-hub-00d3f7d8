@@ -70,7 +70,7 @@ export default function AlertsPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">{alert.message}</p>
-                  <p className="text-xs text-muted-foreground">{alert.timestamp.toLocaleString('pt-BR')}</p>
+                  <p className="text-xs text-muted-foreground">{alert.timestamp.toLocaleString('pt-PT')}</p>
                 </div>
                 <Badge variant={alert.severity === 'critical' || alert.severity === 'high' ? 'destructive' : 'secondary'}>
                   {severityLabels[alert.severity]}
