@@ -106,10 +106,23 @@ export default function LoginPage() {
                     type="text"
                     placeholder="Seu nome completo"
                     value={fullName}
-                    onChange={e => setFullName(e.target.value)}
+                    onChange={e => {
+                      const value = e.target.value;
+                      setFullName(value);
+                      if (/\d/.test(value)) {
+                        setFullNameError('O nome não pode conter números');
+                      } else {
+                        setFullNameError('');
+                      }
+                    }}
                     required
                     autoComplete="name"
+                    aria-invalid={fullNameError ? 'true' : 'false'}
+                    className={fullNameError ? 'border-destructive focus-visible:ring-destructive' : ''}
                   />
+                  {fullNameError && (
+                    <p className="text-xs text-destructive" role="alert">{fullNameError}</p>
+                  )}
                 </div>
               )}
               <div className="space-y-2">
