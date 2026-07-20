@@ -108,8 +108,8 @@ export default function LoginPage() {
                     onChange={e => {
                       const value = e.target.value;
                       setFullName(value);
-                      if (/\d/.test(value)) {
-                        setFullNameError('O nome não pode conter números');
+                      if (/[^a-zA-ZÀ-ÿ\s]/.test(value)) {
+                        setFullNameError('O nome só pode conter letras e espaços');
                       } else {
                         setFullNameError('');
                       }
