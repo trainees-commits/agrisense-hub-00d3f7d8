@@ -108,8 +108,8 @@ export default function LoginPage() {
                     onChange={e => {
                       const value = e.target.value;
                       setFullName(value);
-                      if (/[^a-zA-ZÀ-ÿ\s]/.test(value)) {
-                        setFullNameError('O nome só pode conter letras e espaços');
+                      if (/[^a-zA-ZáàâãäéèêëíìîïóòôõöúùûüçÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ\s]/.test(value)) {
+                        setFullNameError('O nome só pode conter letras do alfabeto português e espaços');
                       } else {
                         setFullNameError('');
                       }
