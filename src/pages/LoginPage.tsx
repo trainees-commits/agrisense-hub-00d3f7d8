@@ -36,9 +36,8 @@ export default function LoginPage() {
         toast.error('Informe o seu nome');
         return;
       }
-      if (/\d/.test(fullName)) {
-        toast.error('O nome não pode conter números');
-        setFullNameError('O nome não pode conter números');
+      if (fullNameError) {
+        toast.error(fullNameError);
         return;
       }
       if (password !== confirmPassword) {
